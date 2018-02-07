@@ -1,4 +1,4 @@
-app.controller('LogInController', function($scope) {
+app.controller('LoginController', function($scope) {
   $scope.username = "";
   $scope.password = "";
   $scope.iniciarSesion = function(){
