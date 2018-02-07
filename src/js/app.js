@@ -1,4 +1,4 @@
-var app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute']);
+var app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute', 'material.svgAssetsCache']);
 
 // Configuración de las rutas
 app.config(function($routeProvider) {
@@ -20,3 +20,5 @@ app.config(function($routeProvider) {
       redirectTo: '/'
     });
 });
+
+

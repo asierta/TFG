@@ -10,9 +10,9 @@
       "assets": [
         "assets",
         "favicon.ico",
-		"img",
-		"js",
-		"views"
+        "img",
+        "js",
+        "views"
       ],
       "index": "index.html",
       "main": "main.ts",
