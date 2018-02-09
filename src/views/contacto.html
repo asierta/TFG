@@ -1,4 +1,22 @@
-<div class="jumbotron text-center">
-  <h1>Contacto</h1>
-  <p>{{ message }}</p>
+<div>
+  <h1>Prueba pacientes</h1>
+  <p>
+    <md-button class="md-accent md-raised" ng-click="crearPaciente()">
+      Crear paciente
+    </md-button>
+  </p>
+  <p>
+    <md-button class="md-accent md-raised" ng-click="verPacientes()">
+      Ver pacientes
+    </md-button>
+  </p>
+  <p>
+    <md-button class="md-accent md-raised" ng-click="verCambiosPacientes()">
+      Ver cambios pacientes
+    </md-button>
+  </p>
+
+  <div ng-repeat="p in pacientes">
+    <p>{{ p.nombre }} {{p.apellido}}</p>
+  </div>
 </div>
