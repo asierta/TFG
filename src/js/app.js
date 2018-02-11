@@ -12,9 +12,9 @@ app.config(function($routeProvider) {
       templateUrl : 'views/login.html',
       controller 	: 'LoginController'
     })
-    .when('/contacto', {
-      templateUrl : 'views/contacto.html',
-      controller 	: 'contactController'
+    .when('/importar', {
+      templateUrl : 'views/importarDatos.html',
+      controller 	: 'importarDatosController'
     })
     .otherwise({
       redirectTo: '/'
