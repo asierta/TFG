@@ -90,7 +90,7 @@ function apsUploadFileLink(scope, element, attrs) {
       var reader = new FileReader();
       reader.onload = function (e) {
         var text = reader.result;
-        var JSON = csvJSON2(text);
+        var JSON = csvJSON(text);
         //console.log(JSON);
         uploadJSON(JSON);
       };
@@ -133,7 +133,7 @@ function apsUploadFileLink(scope, element, attrs) {
 //   return JSON.stringify(result); //JSON
 // }
 
-function csvJSON2(csv) {
+function csvJSON(csv) {
 
   var lines = csv.split("\n");
 
