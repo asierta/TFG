@@ -69,16 +69,16 @@ function apsUploadFile() {
   };
 }
 
-function apsUploadFileLink(scope, element, attrs) {
+function apsUploadFileLink(scope, element) {
   var input = $(element[0].querySelector('#fileInput'));
   var button = $(element[0].querySelector('#uploadButton'));
   var textInput = $(element[0].querySelector('#textInput'));
 
   if (input.length && button.length && textInput.length) {
-    button.click(function (e) {
+    button.click(function () {
       input.click();
     });
-    textInput.click(function (e) {
+    textInput.click(function () {
       input.click();
     });
   }
@@ -88,10 +88,10 @@ function apsUploadFileLink(scope, element, attrs) {
     if (files[0]) {
       scope.fileName = files[0].name;
       var reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = function () {
         var text = reader.result;
         var JSON = csvJSON(text);
-        //console.log(JSON);
+        console.log(JSON);
         uploadJSON(JSON);
       };
       reader.readAsText(files[0]);
@@ -101,37 +101,6 @@ function apsUploadFileLink(scope, element, attrs) {
     scope.$apply();
   });
 }
-
-// function csvJSON(csv) {
-//
-//   var lines = csv.split("\n");
-//
-//   var result = [];
-//
-//   var headers = lines[0].split(";");
-//
-//   for (var i = 1; i < lines.length; i++) {
-//
-//     var obj = {};
-//     var currentline = lines[i].split(";");
-//
-//     for (var j = 0; j < headers.length; j++) {
-//       if ((j === headers.length - 1) && (i < lines.length -1)) { //Para eliminar los \r que aparecen al final de cada linea, excepto en la ultima
-//         var headersinR = headers[j].substr(0, headers[j].length - 1);
-//         obj[headersinR] = currentline[j].substr(0, currentline[j].length - 1);
-//       } else if(i === lines.length - 1){ //Si es la ultima linea del documento
-//         var headersinR = headers[j].substr(0, headers[j].length - 1);
-//         obj[headersinR] = currentline[j];
-//       }else{
-//         obj[headers[j]] = currentline[j];
-//       }
-//     }
-//     result.push(obj);
-//   }
-//
-// //return result; //JavaScript object
-//   return JSON.stringify(result); //JSON
-// }
 
 function csvJSON(csv) {
 
@@ -191,6 +160,7 @@ function uploadJSON(file) {
     var errorCode = error.code;
     var errorMessage = error.message;
     console.log(errorCode + " " + errorMessage);
+    showToast(errorMessage);
   });
 }
 

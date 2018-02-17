@@ -20,6 +20,14 @@ app.controller('mainController', function($scope, $mdDialog, $mdMedia, $mdToast)
       });
     $scope.$watch(function () { return $mdMedia('xs') || $mdMedia('sm'); }, function (wantsFullScreen) { return $scope.customFullscreen = wantsFullScreen === true; });
   };
+
+  $scope.cerrarSesion = function(){
+    firebase.auth().signOut().then(function() {
+      showToast("Sesión finalizada correctamente");
+    }).catch(function(error) {
+      showToast(error.message);
+    });
+  };
   showToast = function (content) {
     $mdToast.show($mdToast.simple()
       .content(content)
