@@ -256,7 +256,11 @@ function conversorJSON(csv, name) {
     var currentline = lines[i].split(";");
 
     tiempoFormatoHora = currentline[0].split(":");
-    tiempo = parseFloat(tiempoFormatoHora[2]);
+    if(tiempoFormatoHora[1] >= 1){
+      tiempo = parseFloat(tiempoFormatoHora[2]) + (60*parseFloat(tiempoFormatoHora[1]));
+    }else {
+      tiempo = parseFloat(tiempoFormatoHora[2]);
+    }
 
     //Eliminar las dos primeras columas: tiempo y hora
     currentline.splice(0, 2);
@@ -267,19 +271,19 @@ function conversorJSON(csv, name) {
       var currentJointData = currentline.splice(0, 4);//Tomamos cada una de las articulaciones y las vamos añadiendo al JSON de una en una
       if (currentJointData[1] !== "-" && currentJointData[2] !== "-" || currentJointData[3] !== "-") {
         if (c === 0) {//Si es la articulación raiz
-            jointKeys[c].push({
-              pos: [parseFloat(currentJointData[1].replace(",", ".")), parseFloat(currentJointData[2].replace(",", ".")), parseFloat(currentJointData[3].replace(",", "."))],
-              time: tiempo,
-              scl: [50, 50, 50],
-              inf: parseInt(currentJointData[0])
-            });
+          jointKeys[c].push({
+            pos: [parseFloat(currentJointData[1].replace(",", ".")), parseFloat(currentJointData[2].replace(",", ".")), parseFloat(currentJointData[3].replace(",", "."))],
+            time: tiempo,
+            scl: [50, 50, 50],
+            inf: parseInt(currentJointData[0])
+          });
         } else {
-            jointKeys[c].push({
-              pos: [parseFloat(currentJointData[1].replace(",", ".")), parseFloat(currentJointData[2].replace(",", ".")), parseFloat(currentJointData[3].replace(",", "."))],
-              time: tiempo,
-              scl: [1, 1, 1],
-              inf: parseInt(currentJointData[0])
-            });
+          jointKeys[c].push({
+            pos: [parseFloat(currentJointData[1].replace(",", ".")), parseFloat(currentJointData[2].replace(",", ".")), parseFloat(currentJointData[3].replace(",", "."))],
+            time: tiempo,
+            scl: [1, 1, 1],
+            inf: parseInt(currentJointData[0])
+          });
         }
       } else {
         if (c === 0) {
@@ -311,7 +315,7 @@ function conversorJSON(csv, name) {
     data.geometries[0].data.animation.hierarchy.push(hierarchyData);
   }
   // console.log(JSON.stringify(data));
-  download(JSON.stringify(data), name +'.json', 'text/json');
+  download(JSON.stringify(data), name + '.json', 'text/json');
   // return JSON.stringify(result); //JSON
 }
 
@@ -526,7 +530,7 @@ function conversorJSONReferenciaCamara(csv, name) {
     headersline.splice(0, 2);
 
     var c = 0;
-    var camara = currentline.splice(104,4);
+    var camara = currentline.splice(104, 4);
     while (currentline.length > 4) {
       var currentJointData = currentline.splice(0, 4);//Tomamos cada una de las articulaciones y las vamos añadiendo al JSON de una en una
       if (currentJointData[1] !== "-" && currentJointData[2] !== "-" || currentJointData[3] !== "-") {
@@ -575,7 +579,7 @@ function conversorJSONReferenciaCamara(csv, name) {
     data.geometries[0].data.animation.hierarchy.push(hierarchyData);
   }
   // console.log(JSON.stringify(data));
-  download(JSON.stringify(data), name +'.json', 'text/json');
+  download(JSON.stringify(data), name + '.json', 'text/json');
   // return JSON.stringify(result); //JSON
 }
 
