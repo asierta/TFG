@@ -1,0 +1,67 @@
+<div ng-controller="CrearGrabacionController" ng-cloak>
+  <md-content layout-padding flex="100">
+    <md-card>
+      <form name="formGrabacion"  ng-submit="crearGrabacion()">
+
+        <div layout="row">
+          <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()" >
+            <md-icon md-svg-src="img/icons/add.svg"></md-icon>
+          </md-button>
+          <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-click="quitarCampo()" >
+            <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
+          </md-button>
+        </div>
+
+        <div layout="row">
+          <md-input-container flex="50">
+            <label>Identificador</label>
+            <input required name="id" ng-model="grabacion.id">
+            <div ng-messages="grabacion.id.$error">
+              <div ng-message="required">Campo requerido.</div>
+            </div>
+          </md-input-container>
+
+          <md-input-container flex="50">
+            <label>Lugar</label>
+            <input required name="lugar" ng-model="grabacion.lugar">
+            <div ng-messages="grabacion.lugar.$error">
+              <div ng-message="required">Campo requerido.</div>
+            </div>
+          </md-input-container>
+
+        </div>
+
+        <div layout="row" ng-cloak="">
+          <md-input-container flex="50">
+            <label>Fecha grabación</label>
+            <md-datepicker required ng-model="grabacion.fecha" md-current-view="year" md-hide-icons="all" md-open-on-focus></md-datepicker>
+          </md-input-container>
+
+          <md-input-container flex="50">
+            <label>Paciente</label>
+            <md-select ng-model="grabacion.paciente" md-on-close="limpiarBuscador()" md-on-open="cargarPacientes()" class="selectPacientes">
+              <md-select-header class="selectdemoSelectHeader">
+                <input ng-model="searchTerm" type="search" placeholder="Buscar un paciente..." onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
+              </md-select-header>
+              <md-option ng-value="paciente" ng-repeat="paciente in pacientes | filter:searchTerm" ng-cloak="">{{paciente.nombre}}</md-option>
+            </md-select>
+            <div ng-messages="paciente.apellido.$error">
+              <div ng-message="required">Campo requerido.</div>
+            </div>
+          </md-input-container>
+        </div>
+
+        <div layout="row" flex="100">
+          <aps-upload-file></aps-upload-file>
+        </div>
+
+        <div id="camposExtra" layout="column" flex="100"></div>
+
+
+        <div style="text-align: center;">
+          <md-button type="submit" class="md-raised md-primary" ng-disabled="formGrabacion.$invalid" >Crear grabación</md-button>
+        </div>
+      </form>
+    </md-card>
+  </md-content>
+</div>

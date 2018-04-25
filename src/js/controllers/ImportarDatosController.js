@@ -8,49 +8,7 @@ app.controller('importarDatosController', function ($scope, $window) {
   $scope.pacientes = "";
   $scope.files = "";
 
-  $scope.subir = function () {
-    console.log($scope.files[0]);
-  }
-}).directive('apsUploadFile', apsUploadFile);
-
-function apsUploadFile() {
-  return {
-    restrict: 'E',
-    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file">    Choose file </md-button><md-input-container  md-no-float>    <input id="textInput" ng-model="fileName" type="text" placeholder="No file chosen" ng-readonly="true"></md-input-container><md-button id="SubirButton" class="md-raised md-primary" ng-click="subir()"> Subir </md-button>',
-    link: apsUploadFileLink
-  };
-}
-
-function apsUploadFileLink(scope, element) {
-  var input = $(element[0].querySelector('#fileInput'));
-  var button = $(element[0].querySelector('#uploadButton'));
-  var textInput = $(element[0].querySelector('#textInput'));
-
-  if (input.length && button.length && textInput.length) {
-    button.click(function () {
-      input.click();
-    });
-    textInput.click(function () {
-      input.click();
-    });
-  }
-
-  input.on('change', function (e) {
-    var files = e.target.files;
-    if (files[0]) {
-      scope.fileName = files[0].name;
-      var reader = new FileReader();
-      reader.onload = function () {
-        var text = reader.result;
-        var JSON = conversorJSON(text, scope.fileName);
-      };
-      reader.readAsText(files[0]);
-    } else {
-      scope.fileName = null;
-    }
-    scope.$apply();
-  });
-}
+})
 
 function conversorJSON(csv, name) {
 
@@ -644,14 +602,6 @@ function uploadJSON(file) {
     showToast(errorMessage);
   });
 }
-
-showToast = function (content) {
-  $mdToast.show({
-    content: content,
-    position: 'bottom right',
-    hideDelay: 3000
-  });
-};
 
 function download(content, fileName, contentType) {
   var a = document.createElement("a");

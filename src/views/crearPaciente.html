@@ -1,0 +1,56 @@
+<div ng-controller="CrearPacienteController" ng-cloak>
+  <md-content layout-padding flex="100">
+    <md-card >
+    <form name="formPaciente"  ng-submit="crearPaciente()">
+      <div layout="row">
+        <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()" >
+          <md-icon md-svg-src="img/icons/add.svg"></md-icon>
+        </md-button>
+        <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-click="quitarCampo()" >
+          <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
+        </md-button>
+      </div>
+
+      <div layout="row">
+        <md-input-container flex="50">
+          <label>Nombre</label>
+          <input required name="nombre" ng-model="paciente.nombre">
+          <div ng-messages="paciente.nombre.$error">
+            <div ng-message="required">Campo requerido.</div>
+          </div>
+        </md-input-container>
+
+        <md-input-container flex="50">
+          <label>Apellido</label>
+          <input required name="apellido" ng-model="paciente.apellido">
+          <div ng-messages="paciente.apellido.$error">
+            <div ng-message="required">Campo requerido.</div>
+          </div>
+        </md-input-container>
+      </div>
+      <div layout="row">
+        <md-input-container flex="50">
+          <label>Fecha nacimiento</label>
+          <md-datepicker required ng-model="paciente.fecha" md-current-view="year" md-hide-icons="calendar""></md-datepicker>
+        </md-input-container>
+
+        <md-input-container class="md-block" flex="50">
+          <label>Altura</label>
+          <input name="altura" ng-model="paciente.altura" type="number" min="0" max="215" step="1">
+          <div ng-messages="paciente.altura.$error">
+            <div ng-message="max">Your field is too long</div>
+            <div ng-message="min">Your field is too long</div>
+          </div>
+        </md-input-container>
+      </div>
+      <div layout="column" id="camposExtra">
+
+      </div>
+
+      <div style="text-align: center;">
+        <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid" >Submit</md-button>
+      </div>
+    </form>
+      </md-card>
+  </md-content>
+</div>

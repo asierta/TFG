@@ -28,10 +28,11 @@ app.controller('mainController', function($scope, $mdDialog, $mdMedia, $mdToast)
       showToast(error.message);
     });
   };
+
   showToast = function (content) {
     $mdToast.show($mdToast.simple()
       .content(content)
-      .position('top right')
+      .position('bottom right')
       .hideDelay(3000));
   };
 
