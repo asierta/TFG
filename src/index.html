@@ -4,7 +4,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Angular Material style sheet -->
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
@@ -40,7 +40,9 @@
             <md-list-item ng-click="redirect('')">Inicio</md-list-item>
             <md-list-item ng-click="redirect('importar')">Importar Datos</md-list-item>
             <md-list-item ng-click="redirect('crearPaciente')">Crear paciente</md-list-item>
+            <md-list-item ng-click="redirect('borrarPaciente')">Borrar paciente</md-list-item>
             <md-list-item ng-click="redirect('crearGrabacion')">Crear grabacion</md-list-item>
+            <md-list-item ng-click="redirect('borrarGrabacion')">Borrar grabación</md-list-item>
           </md-list>
         </md-content>
       </md-sidenav>
@@ -65,7 +67,7 @@
               <div class="md-dialog-content" style="width: 400px; max-width: 80%; height: 150px; max-height: 50%;">
                 <md-input-container class="md-block">
                   <label>Usuario</label>
-                    <input name="username" ng-model="username" type="email" md-autofocus required title="username"/>
+                    <input name="username" ng-model="username" type="email" md-autofocus required title="username" autocomplete="username"/>
                   <div ng-messages="loginForm.username.$error" ng-show="loginForm.username.$touched">
                     <div ng-message="required">El usuario es obligatorio</div>
                     <div ng-message="email">Introduce una dirección de correo válida</div>
@@ -73,7 +75,7 @@
                 </md-input-container>
                 <md-input-container class="md-block">
                   <label>Contraseña</label>
-                    <input type="password" name="password" ng-model="password" minlength="6" required title="password"/>
+                    <input type="password" name="password" ng-model="password" minlength="6" required title="password" autocomplete="current-password"/>
                   <div ng-messages="loginForm.password.$error" ng-show="loginForm.password.$touched">
                     <div ng-message="required">La contraseña es obligatoria</div>
                     <div ng-message="minlength">La contraseña debe tener al menos 6 caracteres</div>
@@ -95,17 +97,17 @@
   </div>
 
   <!-- Angular Material requires Angular.js Libraries -->
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-animate.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-aria.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-messages.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.3/angular-route.js"></script>
   <script src="js/svg-assets-cache.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0/angular-material-icons.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.js"></script>
 
   <!-- Angular Material Library -->
-  <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.6/angular-material.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.min.js"></script>
 
 
   <!-- Modules -->
@@ -117,7 +119,9 @@
   <script src="js/controllers/LoginController.js"></script>
   <script src="js/controllers/ImportarDatosController.js"></script>
   <script src="js/controllers/CrearPacienteController.js"></script>
+  <script src="js/controllers/BorrarPacienteController.js"></script>
   <script src="js/controllers/CrearGrabacionController.js"></script>
+  <script src="js/controllers/BorrarGrabacionController.js"></script>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
@@ -126,6 +130,11 @@
   <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js"></script>
   <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
+
+<!--Extra libraries-->
+<script src="js/papaparse.js"></script>
+<script src="js/moment.js"></script>
+
   <script>
     // Initialize Firebase
     var config = {

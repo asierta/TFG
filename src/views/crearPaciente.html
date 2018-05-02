@@ -14,41 +14,67 @@
       <div layout="row">
         <md-input-container flex="50">
           <label>Nombre</label>
-          <input required name="nombre" ng-model="paciente.nombre">
-          <div ng-messages="paciente.nombre.$error">
-            <div ng-message="required">Campo requerido.</div>
+          <input required name="nombre" ng-model="paciente.nombre" autocomplete='given-name' md-autofocus>
+          <div ng-messages="formPaciente.nombre.$error" ng-show="formPaciente.nombre.$touched">
+            <div ng-message="required">Nombre requerido</div>
           </div>
         </md-input-container>
 
         <md-input-container flex="50">
           <label>Apellido</label>
-          <input required name="apellido" ng-model="paciente.apellido">
-          <div ng-messages="paciente.apellido.$error">
+          <input required name="apellido" ng-model="paciente.apellido" autocomplete='family-name'>
+          <div ng-messages="formPaciente.apellido.$error" ng-show="formPaciente.apellido.$touched">
             <div ng-message="required">Campo requerido.</div>
           </div>
         </md-input-container>
       </div>
+
       <div layout="row">
         <md-input-container flex="50">
-          <label>Fecha nacimiento</label>
-          <md-datepicker required ng-model="paciente.fecha" md-current-view="year" md-hide-icons="calendar""></md-datepicker>
+          <label>F. nacimiento</label>
+          <md-datepicker name="fecha" required ng-model="paciente.fecha" md-current-view="year" md-hide-icons="calendar" autocomplete='bday'></md-datepicker>
+          <div ng-messages="formPaciente.fecha.$error"  ng-show="formPaciente.fecha.$touched">
+            <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+          </div>
         </md-input-container>
 
         <md-input-container class="md-block" flex="50">
           <label>Altura</label>
-          <input name="altura" ng-model="paciente.altura" type="number" min="0" max="215" step="1">
-          <div ng-messages="paciente.altura.$error">
+          <input name="altura" ng-model="paciente.altura" type="number" min="0" max="225" step="1">
+          <div ng-messages="formPaciente.altura.$error"  ng-show="formPaciente.altura.$touched">
             <div ng-message="max">Your field is too long</div>
             <div ng-message="min">Your field is too long</div>
           </div>
         </md-input-container>
       </div>
+
+      <div layout="row" ng-cloak="">
+        <md-input-container flex="50">
+          <label>Sexo</label>
+          <md-select ng-model="paciente.sexo" required>
+            <md-option value="hombre">Hombre</md-option>
+            <md-option value="mujer">Mujer</md-option>
+            <md-option value="otro">Otro</md-option>
+          </md-select>
+        </md-input-container>
+
+        <md-input-container flex="50">
+          <label>Grabación</label>
+          <md-select name="grabacion" ng-model="paciente.grabacion" md-on-close="limpiarBuscador()" md-on-open="cargarGrabaciones()" class="selectGrabacion">
+            <md-select-header class="selectdemoSelectHeader">
+              <input ng-model="searchTerm" type="search" placeholder="Buscar una grabación..." onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
+            </md-select-header>
+            <md-option ng-value="grabacion" ng-repeat="grabacion in grabaciones | filter:searchTerm" ng-cloak="">{{grabacion.id + ": " +grabacion.grabacion}}</md-option>
+          </md-select>
+        </md-input-container>
+      </div>
+
       <div layout="column" id="camposExtra">
 
       </div>
 
       <div style="text-align: center;">
-        <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid" >Submit</md-button>
+        <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid" >Crear paciente</md-button>
       </div>
     </form>
       </md-card>

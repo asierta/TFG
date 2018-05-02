@@ -16,15 +16,15 @@
           <md-input-container flex="50">
             <label>Identificador</label>
             <input required name="id" ng-model="grabacion.id">
-            <div ng-messages="grabacion.id.$error">
+            <div ng-messages="formGrabacion.id.$error">
               <div ng-message="required">Campo requerido.</div>
             </div>
           </md-input-container>
 
           <md-input-container flex="50">
             <label>Lugar</label>
-            <input required name="lugar" ng-model="grabacion.lugar">
-            <div ng-messages="grabacion.lugar.$error">
+            <input required name="lugar" ng-model="grabacion.lugar" autocomplete="address-level2">
+            <div ng-messages="formGrabacion.lugar.$error">
               <div ng-message="required">Campo requerido.</div>
             </div>
           </md-input-container>
@@ -33,19 +33,22 @@
 
         <div layout="row" ng-cloak="">
           <md-input-container flex="50">
-            <label>Fecha grabación</label>
-            <md-datepicker required ng-model="grabacion.fecha" md-current-view="year" md-hide-icons="all" md-open-on-focus></md-datepicker>
+            <label>F. grabación</label>
+            <md-datepicker required name="fecha" ng-model="grabacion.fecha" md-current-view="year" md-hide-icons="calendar"></md-datepicker>
+            <div ng-messages="formGrabacion.fecha.$error"  ng-show="formGrabacion.fecha.$touched">
+              <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+            </div>
           </md-input-container>
 
           <md-input-container flex="50">
             <label>Paciente</label>
-            <md-select ng-model="grabacion.paciente" md-on-close="limpiarBuscador()" md-on-open="cargarPacientes()" class="selectPacientes">
+            <md-select name="paciente" ng-model="grabacion.paciente" md-on-close="limpiarBuscador()" md-on-open="cargarPacientes()" class="selectPacientes">
               <md-select-header class="selectdemoSelectHeader">
                 <input ng-model="searchTerm" type="search" placeholder="Buscar un paciente..." onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
               </md-select-header>
-              <md-option ng-value="paciente" ng-repeat="paciente in pacientes | filter:searchTerm" ng-cloak="">{{paciente.nombre}}</md-option>
+              <md-option ng-value="paciente" ng-repeat="paciente in pacientes | filter:searchTerm" ng-cloak="">{{paciente.nombre + " " +paciente.apellido}}</md-option>
             </md-select>
-            <div ng-messages="paciente.apellido.$error">
+            <div ng-messages="formGrabacion.paciente.$error" ng-show="formGrabacion.paciente.$touched">
               <div ng-message="required">Campo requerido.</div>
             </div>
           </md-input-container>
