@@ -1,6 +1,11 @@
-app.controller('LoginController', function($scope) {
+app.controller('LoginController', function($scope, $rootScope) {
+  firebase.auth().onAuthStateChanged(function(user) {
+    $scope.sesionIniciada = !!user;
+    $scope.$apply();
+  });
   $scope.username = "";
   $scope.password = "";
+  $rootScope.key = "hola";
   $scope.iniciarSesion = function(){
     var user = firebase.auth().currentUser;
     if (user) {

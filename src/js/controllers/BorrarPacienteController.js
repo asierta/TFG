@@ -1,4 +1,4 @@
-app.controller('BorrarPacienteController', function ($scope, $timeout, $log) {
+app.controller('BorrarPacienteController', function ($scope, $rootScope, $timeout, $log) {
   "use strict";
   let database = firebase.database();
   let pacientesRef = database.ref('pacientes');
@@ -29,6 +29,7 @@ app.controller('BorrarPacienteController', function ($scope, $timeout, $log) {
   }
 
   function searchTextChange(text) {
+    console.log($rootScope.key.toString());
     $log.info('Text changed to ' + text);
   }
 

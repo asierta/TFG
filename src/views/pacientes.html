@@ -1,0 +1,192 @@
+<md-content ng-hide="!user" layout="column" flex>
+  <md-card>
+    <md-toolbar class="md-table-toolbar md-default" ng-hide="selected.length || filter.show">
+      <div class="md-toolbar-tools">
+        <span>Pacientes</span>
+        <div flex></div>
+        <md-button class="md-icon-button" ng-click="filter.show = true" title="Filtrar pacientes">
+          <md-icon>filter_list</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" ng-click="loadStuff()" title="Recargar pacientes">
+          <md-icon>refresh</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" ng-click="addItem($event)" title="Añadir paciente">
+          <md-icon>add</md-icon>
+        </md-button>
+      </div>
+    </md-toolbar>
+
+    <md-toolbar class="md-table-toolbar md-default" ng-show="filter.show && !selected.length">
+      <div class="md-toolbar-tools">
+        <md-icon>search</md-icon>
+        <form flex name="filter.form">
+          <input type="text" ng-model="query.filter" ng-model-options="filter.options"
+                 placeholder="Escriba el nombre del paciente a buscar">
+        </form>
+        <md-button class="md-icon-button" ng-click="removeFilter()" title="Restaurar filtro">
+          <md-icon>close</md-icon>
+        </md-button>
+      </div>
+    </md-toolbar>
+
+    <md-toolbar class="md-table-toolbar alternate" ng-show="options.rowSelection && selected.length">
+      <div class="md-toolbar-tools">
+        {{selected.length}} {{selected.length > 1 ? 'pacientes seleccionados' : 'paciente seleccionado'}}
+        <span flex></span>
+        <md-button class="md-icon-button" ng-click="borrarPacientes($event)"
+                   title="Borrar {{selected.length > 1 ? 'pacientes seleccionados' : 'paciente seleccionado'}}">
+          <md-icon style="color: white">delete</md-icon>
+        </md-button>
+      </div>
+
+    </md-toolbar>
+
+    <md-table-container>
+      <table md-table md-row-select="options.rowSelection" multiple="{{options.multiSelect}}" ng-model="selected"
+             md-progress="promise">
+        <thead md-head md-order="query.order" md-on-reorder="cargarPacientes">
+        <tr md-row>
+          <th md-column md-order-by="nombre"><span>Nombre</span></th>
+          <th md-column md-date md-order-by="fechaNacimiento"><span>Fecha Nacimiento</span></th>
+          <th md-column md-order-by="sexo"><span>Sexo</span></th>
+          <th md-column md-numeric md-order-by="altura"><span>Altura(cm)</span></th>
+          <th md-column><span>Grabaciones</span></th>
+          <th md-column><span>Atributos extra</span></th>
+        </tr>
+        </thead>
+        <tbody md-body>
+        <tr md-row md-select="paciente" md-on-select="logItem" md-auto-select="options.autoSelect"
+            ng-repeat="paciente in pacientes.data | filter: filter.search | orderBy: query.order | limitTo: query.limit : (query.page -1) * query.limit">
+          <td md-cell>{{paciente.nombre + " " + paciente.apellido}}</td>
+          <td md-cell>{{paciente.fechaNacimiento}}</td>
+          <td md-cell>{{paciente.sexo}}</td>
+          <td md-cell>{{paciente.altura}}</td>
+          <td md-cell>
+            <md-button ng-click="redirect('grabaciones/'+paciente.nombre + ' ' + paciente.apellido)"
+                       style="background: lightgrey;" ng-show="paciente.grabaciones"
+                       title="Ver grabaciones de {{paciente.nombre + ' ' + paciente.apellido}}">Ver
+            </md-button>
+          </td>
+          <td md-cell>
+            <md-button ng-click="verAtributosExtra($event,paciente)" ng-show="paciente.extra"
+                       style="background: lightgrey;"
+                       title="Ver información extra de {{paciente.nombre + ' ' + paciente.apellido}}">Ver
+            </md-button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </md-table-container>
+    <md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="query.limit"
+                         md-limit-options="limitOptions" md-page="query.page" md-total="{{pacientes.count}}"
+                         md-page-select="options.pageSelect" md-boundary-links="options.boundaryLinks"
+                         md-on-paginate="cargarPacientes"></md-table-pagination>
+  </md-card>
+  <script type="text/ng-template" id="paciente-dialog.template.html">
+    <md-dialog id="paciente-dialog" aria-label="CrearPaciente">
+      <form name="formPaciente" ng-submit="crearPaciente()">
+        <md-toolbar>
+          <div class="md-toolbar-tools">
+            <h2>Crear paciente</h2>
+            <span flex></span>
+            <md-button class="md-icon-button" ng-click="close(false)">
+              <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+            </md-button>
+          </div>
+        </md-toolbar>
+
+        <md-dialog-content style="max-width:800px;max-height:810px; width: auto; height: auto;">
+          <div class="md-dialog-content">
+
+            <div layout="row">
+              <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()"
+                         title="Añadir campo extra">
+                <md-icon md-svg-src="img/icons/add.svg"></md-icon>
+              </md-button>
+              <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 1"
+                         ng-click="quitarCampo()" title="Eliminar último campo extra creado">
+                <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
+              </md-button>
+            </div>
+
+            <div layout="row">
+              <md-input-container flex="50">
+                <label>Nombre</label>
+                <input required name="nombre" ng-model="paciente.nombre" autocomplete='given-name' md-autofocus>
+                <div ng-messages="formPaciente.nombre.$error" ng-show="formPaciente.nombre.$touched">
+                  <div ng-message="required">Nombre requerido</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container flex="50">
+                <label>Apellido</label>
+                <input required name="apellido" ng-model="paciente.apellido" autocomplete='family-name'>
+                <div ng-messages="formPaciente.apellido.$error" ng-show="formPaciente.apellido.$touched">
+                  <div ng-message="required">Campo requerido.</div>
+                </div>
+              </md-input-container>
+            </div>
+
+            <div layout="row">
+              <md-input-container flex="50">
+                <label>F. nacimiento</label>
+                <md-datepicker name="fecha" required ng-model="paciente.fecha" md-current-view="year"
+                               md-hide-icons="calendar" autocomplete='bday'></md-datepicker>
+                <div ng-messages="formPaciente.fecha.$error" ng-show="formPaciente.fecha.$touched">
+                  <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container class="md-block" flex="50">
+                <label>Altura</label>
+                <input name="altura" ng-model="paciente.altura" type="number" min="0" max="225" step="1">
+                <div ng-messages="formPaciente.altura.$error" ng-show="formPaciente.altura.$touched">
+                  <div ng-message="max">Your field is too long</div>
+                  <div ng-message="min">Your field is too long</div>
+                </div>
+              </md-input-container>
+            </div>
+
+            <div layout="row" ng-cloak="">
+              <md-input-container flex="50">
+                <label>Sexo</label>
+                <md-select ng-model="paciente.sexo" name="sexo" required>
+                  <md-option value="Hombre">Hombre</md-option>
+                  <md-option value="Mujer">Mujer</md-option>
+                  <md-option value="Otro">Otro</md-option>
+                </md-select>
+                <div ng-messages="formPaciente.sexo.$error" ng-show="formPaciente.sexo.$touched">
+                  <div ng-message="required">Campo requerido.</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container flex="50">
+                <label>Grabación</label>
+                <md-select name="grabacion" ng-model="paciente.grabacion" md-on-close="limpiarBuscador()"
+                           md-on-open="cargarGrabaciones()" class="selectGrabacion">
+                  <md-select-header class="selectdemoSelectHeader">
+                    <input ng-model="searchTerm" type="search" placeholder="Buscar una grabación..."
+                           onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
+                  </md-select-header>
+                  <md-option ng-value="grabacion" ng-repeat="grabacion in grabaciones | filter:searchTerm" ng-cloak="">
+                    {{grabacion.id + ": " +grabacion.grabacion}}
+                  </md-option>
+                </md-select>
+
+              </md-input-container>
+            </div>
+
+            <div layout="column" id="camposExtra">
+
+            </div>
+
+            <div style="text-align: center;">
+              <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid">Crear paciente
+              </md-button>
+            </div>
+          </div>
+        </md-dialog-content>
+      </form>
+    </md-dialog>
+  </script>
+</md-content>

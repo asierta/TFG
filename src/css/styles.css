@@ -26,3 +26,38 @@
   max-height: 240px;
 }
 
+md-toolbar.md-table-toolbar form > input {
+  width: 100%;
+  margin: 0;
+  border: none;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+md-progress-linear {
+  padding-top: 10px;
+  margin-bottom: 20px;
+}
+
+.prevCSVs {
+  font-family: "Roboto", sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.prevCSVs td, .prevCSVs th {
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+}
+
+.prevCSVs tr:nth-child(even){background-color: #f2f2f2;}
+
+.prevCSVs tr:hover {background-color: #ddd;}
+
+.prevCSVs th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: center;
+  color: #161616;
+}
+
+#searchinput { color: black; }

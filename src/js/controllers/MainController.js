@@ -1,5 +1,12 @@
-app.controller('mainController', function($scope, $mdDialog, $mdMedia, $mdToast) {
+app.controller('mainController', function($scope, $rootScope, $mdDialog, $mdMedia, $mdToast) {
+  $scope.sesionIniciada = null;
+  firebase.auth().onAuthStateChanged(function(user) {
+    $scope.sesionIniciada = !!user;
+    $scope.$apply();
+  });
+
   $scope.status = '';
+  $rootScope.key = '';
   $scope.customFullscreen = $mdMedia('xs') || $mdMedia('sm');
   $scope.showDialog = function (event) {
     var useFullScreen = ($mdMedia('sm') || $mdMedia('xs')) && $scope.customFullscreen;
@@ -29,12 +36,12 @@ app.controller('mainController', function($scope, $mdDialog, $mdMedia, $mdToast)
     });
   };
 
-  showToast = function (content) {
+  function showToast(content) {
     $mdToast.show($mdToast.simple()
       .content(content)
       .position('bottom right')
       .hideDelay(3000));
-  };
+  }
 
   function LoginDialogController($scope, $mdDialog) {
     $scope.hide = function() {
@@ -48,6 +55,7 @@ app.controller('mainController', function($scope, $mdDialog, $mdMedia, $mdToast)
     $scope.login = function() {
       var username = this.username;
       var password = this.password;
+      $rootScope.key = CryptoJS.MD5(this.password);
       firebase.auth().signInWithEmailAndPassword(this.username, this.password).then(function(){
         console.log("Sesión iniciada correctamente");
         $mdDialog.hide({ username: username, password: password });

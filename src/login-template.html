@@ -1,0 +1,43 @@
+<script type="text/ng-template" id="login-dialog.template.html">
+  <md-dialog id="login-dialog" aria-label="Login">
+    <form id="loginForm" name="loginForm" ng-submit="login()">
+      <md-toolbar>
+        <div class="md-toolbar-tools">
+          <h2>Iniciar sesión</h2>
+          <span flex></span>
+          <md-button class="md-icon-button" ng-click="close()">
+            <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+          </md-button>
+        </div>
+      </md-toolbar>
+
+      <md-dialog-content>
+        <div class="md-dialog-content" style="width: 400px; max-width: 80%; height: 150px; max-height: 50%;">
+          <md-input-container class="md-block">
+            <label>Usuario</label>
+            <input name="username" ng-model="username" type="email" md-autofocus required title="username" autocomplete="username"/>
+            <div ng-messages="loginForm.username.$error" ng-show="loginForm.username.$touched">
+              <div ng-message="required">El usuario es obligatorio</div>
+              <div ng-message="email">Introduce una dirección de correo válida</div>
+            </div>
+          </md-input-container>
+          <md-input-container class="md-block">
+            <label>Contraseña</label>
+            <input type="password" name="password" ng-model="password" minlength="6" required title="password" autocomplete="current-password"/>
+            <div ng-messages="loginForm.password.$error" ng-show="loginForm.password.$touched">
+              <div ng-message="required">La contraseña es obligatoria</div>
+              <div ng-message="minlength">La contraseña debe tener al menos 6 caracteres</div>
+            </div>
+          </md-input-container>
+          <div id="error-submit" style="color:red"></div>
+        </div>
+      </md-dialog-content>
+
+      <md-dialog-actions layout="row">
+        <a href="" class="md-primary">Forgot Password?</a>
+        <span flex></span>
+        <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Login</md-button>
+      </md-dialog-actions>
+    </form>
+  </md-dialog>
+</script>

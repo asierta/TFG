@@ -2,7 +2,6 @@ app.controller('BorrarGrabacionController', function ($scope, $timeout, $log) {
   let database = firebase.database();
   let storage = firebase.storage();
   let pathReference = storage.ref('grabaciones/');
-
   let grabacionesRef = database.ref('grabaciones');
   let grabacionesJSONRef = database.ref('grabacionesJSON');
   let self = this;
@@ -15,10 +14,6 @@ app.controller('BorrarGrabacionController', function ($scope, $timeout, $log) {
   $scope.grabacionSeleccionada = null;
   $scope.algoSeleccionado = false;
 
-  function newState(state) {
-    alert("Sorry! You'll need to create a Constitution for " + state + " first!");
-  }
-
   // ******************************
   // Internal methods
   // ******************************
@@ -28,8 +23,7 @@ app.controller('BorrarGrabacionController', function ($scope, $timeout, $log) {
    * remote dataservice call.
    */
   function querySearch(query) {
-    let results = query ? self.grabaciones.filter(createFilterFor(query)) : self.grabaciones, deferred;
-    return results;
+    return query ? self.grabaciones.filter(createFilterFor(query)) : self.grabaciones;
   }
 
   function searchTextChange(text) {
@@ -38,11 +32,7 @@ app.controller('BorrarGrabacionController', function ($scope, $timeout, $log) {
 
   function selectedItemChange(item) {
     $scope.grabacionSeleccionada = item;
-    if (item !== undefined) {
-      $scope.algoSeleccionado = true;
-    } else {
-      $scope.algoSeleccionado = false;
-    }
+    $scope.algoSeleccionado = item !== undefined;
     $log.info('Item changed to ' + JSON.stringify(item));
 
   }

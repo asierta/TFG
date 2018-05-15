@@ -1,4 +1,4 @@
-let app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute', 'material.svgAssetsCache' ]);
+let app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute', 'material.svgAssetsCache', 'md.data.table' ]);
 
 // Configuración de las rutas
 app.config(function($routeProvider) {
@@ -9,12 +9,16 @@ app.config(function($routeProvider) {
       controller 	: 'mainController'
     })
     .when('/login', {
-      templateUrl : 'views/login.html',
+      templateUrl : 'login-template.html',
       controller 	: 'LoginController'
     })
     .when('/importar', {
       templateUrl : 'views/importarDatos.html',
       controller 	: 'importarDatosController'
+    })
+    .when('/pacientes', {
+      templateUrl : 'views/pacientes.html',
+      controller 	: 'PacienteController'
     })
     .when('/crearPaciente', {
       templateUrl : 'views/crearPaciente.html',
@@ -23,6 +27,10 @@ app.config(function($routeProvider) {
     .when('/borrarPaciente', {
       templateUrl : 'views/borrarPaciente.html',
       controller 	: 'BorrarPacienteController'
+    })
+    .when('/grabaciones/:paciente', {
+      templateUrl : 'views/grabaciones.html',
+      controller 	: 'GrabacionController'
     })
     .when('/crearGrabacion', {
       templateUrl : 'views/crearGrabacion.html',
@@ -36,5 +44,3 @@ app.config(function($routeProvider) {
       redirectTo: '/'
     });
 });
-
-

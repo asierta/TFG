@@ -4,148 +4,158 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Angular Material style sheet -->
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.min.css">
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.9/angular-material.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
+  <link rel="stylesheet" href="https://rawgit.com/daniel-nagy/md-data-table/master/dist/md-data-table.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body ng-app="MyApp" layout="column" ng-cloak="" class=".md-body-2" ng-controller="mainController" flex>
 <ng-component></ng-component>
-  <div ng-controller="MenuCtrl" layout-align="center center" layout="column" flex>
-    <md-toolbar class="md-hue-2">
-      <div class="md-toolbar-tools">
-        <md-button class="md-icon-button" ng-click="toggleLeft()">
-          <md-icon md-svg-icon="img/icons/menu.svg"></md-icon>
-        </md-button>
-        <h2 flex md-truncate>Prueba de diseño</h2>
-        <span>
-          <md-button class="md-accent md-raised" ng-click="cerrarSesion()">
+<div ng-controller="MenuCtrl" layout-align="center center" layout="column" flex>
+  <md-toolbar class="md-hue-2">
+    <div class="md-toolbar-tools">
+      <md-button class="md-icon-button" ng-click="toggleLeft()">
+        <md-icon md-svg-icon="img/icons/menu.svg"></md-icon>
+      </md-button>
+      <h2 flex md-truncate>Prueba de diseño</h2>
+      <span>
+          <md-button ng-show="sesionIniciada && sesionIniciada !== null" class="md-accent md-raised"
+                     ng-click="cerrarSesion()">
           Cerrar sesión
         </md-button>
-        <md-button class="md-accent md-raised" ng-click="showDialog($event)">
+        <md-button ng-show="!sesionIniciada && sesionIniciada !== null" class="md-accent md-raised"
+                   ng-click="showDialog($event)">
           iniciar sesión
         </md-button>
       </span>
-      </div>
-
-    </md-toolbar>
-
-    <div class="container" flex>
-      <md-sidenav class="md-sidenav-left" md-component-id="left" md-whiteframe="4">
-        <md-toolbar class="md-theme-indigo">
-          <h1 class="md-toolbar-tools">Menú</h1>
-        </md-toolbar>
-        <md-content layout-padding>
-          <md-list>
-            <md-list-item ng-click="redirect('')">Inicio</md-list-item>
-            <md-list-item ng-click="redirect('importar')">Importar Datos</md-list-item>
-            <md-list-item ng-click="redirect('crearPaciente')">Crear paciente</md-list-item>
-            <md-list-item ng-click="redirect('borrarPaciente')">Borrar paciente</md-list-item>
-            <md-list-item ng-click="redirect('crearGrabacion')">Crear grabacion</md-list-item>
-            <md-list-item ng-click="redirect('borrarGrabacion')">Borrar grabación</md-list-item>
-          </md-list>
-        </md-content>
-      </md-sidenav>
-      <md-content flex layout-align="center center" style="padding-top: 10%; width: 100%;">
-        <div ng-view layout-align="center center" style="width: 100%;" flex></div>
-      </md-content>
-
-      <script type="text/ng-template" id="login-dialog.template.html">
-        <md-dialog id="login-dialog" aria-label="Login">
-          <form id="loginForm" name="loginForm" ng-submit="login()">
-            <md-toolbar>
-              <div class="md-toolbar-tools">
-                <h2>Iniciar sesión</h2>
-                <span flex></span>
-                <md-button class="md-icon-button" ng-click="close()">
-                  <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
-                </md-button>
-              </div>
-            </md-toolbar>
-
-            <md-dialog-content>
-              <div class="md-dialog-content" style="width: 400px; max-width: 80%; height: 150px; max-height: 50%;">
-                <md-input-container class="md-block">
-                  <label>Usuario</label>
-                    <input name="username" ng-model="username" type="email" md-autofocus required title="username" autocomplete="username"/>
-                  <div ng-messages="loginForm.username.$error" ng-show="loginForm.username.$touched">
-                    <div ng-message="required">El usuario es obligatorio</div>
-                    <div ng-message="email">Introduce una dirección de correo válida</div>
-                  </div>
-                </md-input-container>
-                <md-input-container class="md-block">
-                  <label>Contraseña</label>
-                    <input type="password" name="password" ng-model="password" minlength="6" required title="password" autocomplete="current-password"/>
-                  <div ng-messages="loginForm.password.$error" ng-show="loginForm.password.$touched">
-                    <div ng-message="required">La contraseña es obligatoria</div>
-                    <div ng-message="minlength">La contraseña debe tener al menos 6 caracteres</div>
-                  </div>
-                </md-input-container>
-                <div id="error-submit" style="color:red"></div>
-              </div>
-            </md-dialog-content>
-
-            <md-dialog-actions layout="row">
-              <a href="" class="md-primary">Forgot Password?</a>
-              <span flex></span>
-              <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Login</md-button>
-            </md-dialog-actions>
-          </form>
-        </md-dialog>
-      </script>
     </div>
-  </div>
 
-  <!-- Angular Material requires Angular.js Libraries -->
+  </md-toolbar>
+
+  <div class="container" flex>
+    <md-sidenav class="md-sidenav-left" md-component-id="left" md-whiteframe="4">
+      <md-toolbar class="md-theme-indigo">
+        <h1 class="md-toolbar-tools">Menú</h1>
+      </md-toolbar>
+      <md-content layout-padding>
+        <md-list>
+          <md-list-item ng-click="redirect('')">Inicio</md-list-item>
+          <md-list-item ng-click="redirect('importar')">Importar Datos</md-list-item>
+          <!--<md-list-item ng-click="redirect('crearPaciente')">Crear paciente</md-list-item>-->
+          <!--<md-list-item ng-click="redirect('borrarPaciente')">Borrar paciente</md-list-item>-->
+          <!--<md-list-item ng-click="redirect('crearGrabacion')">Crear grabacion</md-list-item>-->
+          <!--<md-list-item ng-click="redirect('borrarGrabacion')">Borrar grabación</md-list-item>-->
+          <md-list-item ng-click="redirect('pacientes')">Pacientes</md-list-item>
+          <md-list-item ng-click="redirect('grabaciones/all')">Grabaciones</md-list-item>
+        </md-list>
+      </md-content>
+    </md-sidenav>
+    <md-content flex layout-align="center center" style="padding-top: 10%; width: 100%;">
+      <div ng-view layout-align="center center" style="width: 100%;" flex></div>
+    </md-content>
+
+    <script type="text/ng-template" id="login-dialog.template.html">
+      <md-dialog id="login-dialog" aria-label="Login">
+        <form id="loginForm" name="loginForm" ng-submit="login()">
+          <md-toolbar>
+            <div class="md-toolbar-tools">
+              <h2>Iniciar sesión</h2>
+              <span flex></span>
+              <md-button class="md-icon-button" ng-click="close()">
+                <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+              </md-button>
+            </div>
+          </md-toolbar>
+
+          <md-dialog-content>
+            <div class="md-dialog-content" style="width: 400px; max-width: 80%; height: 150px; max-height: 50%;">
+              <md-input-container class="md-block">
+                <label>Usuario</label>
+                <input name="username" ng-model="username" type="email" md-autofocus required title="username"
+                       autocomplete="username"/>
+                <div ng-messages="loginForm.username.$error" ng-show="loginForm.username.$touched">
+                  <div ng-message="required">El usuario es obligatorio</div>
+                  <div ng-message="email">Introduce una dirección de correo válida</div>
+                </div>
+              </md-input-container>
+              <md-input-container class="md-block">
+                <label>Contraseña</label>
+                <input type="password" name="password" ng-model="password" minlength="6" required title="password"
+                       autocomplete="current-password"/>
+                <div ng-messages="loginForm.password.$error" ng-show="loginForm.password.$touched">
+                  <div ng-message="required">La contraseña es obligatoria</div>
+                  <div ng-message="minlength">La contraseña debe tener al menos 6 caracteres</div>
+                </div>
+              </md-input-container>
+              <div id="error-submit" style="color:red"></div>
+            </div>
+          </md-dialog-content>
+
+          <md-dialog-actions layout="row">
+            <a href="" class="md-primary">Forgot Password?</a>
+            <span flex></span>
+            <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Login</md-button>
+          </md-dialog-actions>
+        </form>
+      </md-dialog>
+    </script>
+  </div>
+</div>
+
+<!-- Angular Material requires Angular.js Libraries -->
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-animate.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-aria.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-messages.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.3/angular-route.js"></script>
-  <script src="js/svg-assets-cache.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0/angular-material-icons.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.3/angular-route.js"></script>
+<script src="js/svg-assets-cache.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0/angular-material-icons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.js"></script>
 
-  <!-- Angular Material Library -->
-  <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.8/angular-material.min.js"></script>
+<!-- Angular Material Library -->
+<script src="js/angular-material.js"></script>
 
 
-  <!-- Modules -->
-  <script src="js/app.js"></script>
+<!-- Modules -->
+<script src="js/app.js"></script>
 
-  <!-- Controllers -->
-  <script src="js/controllers/MainController.js"></script>
-  <script src="js/controllers/MenuController.js"></script>
-  <script src="js/controllers/LoginController.js"></script>
-  <script src="js/controllers/ImportarDatosController.js"></script>
-  <script src="js/controllers/CrearPacienteController.js"></script>
-  <script src="js/controllers/BorrarPacienteController.js"></script>
-  <script src="js/controllers/CrearGrabacionController.js"></script>
-  <script src="js/controllers/BorrarGrabacionController.js"></script>
+<!-- Controllers -->
+<script src="js/controllers/MainController.js"></script>
+<script src="js/controllers/MenuController.js"></script>
+<script src="js/controllers/LoginController.js"></script>
+<script src="js/controllers/ImportarDatosController.js"></script>
+<script src="js/controllers/PacienteController.js"></script>
+<script src="js/controllers/CrearPacienteController.js"></script>
+<script src="js/controllers/BorrarPacienteController.js"></script>
+<script src="js/controllers/GrabacionController.js"></script>
+<script src="js/controllers/CrearGrabacionController.js"></script>
+<script src="js/controllers/BorrarGrabacionController.js"></script>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
 
 <!--Extra libraries-->
 <script src="js/papaparse.js"></script>
 <script src="js/moment.js"></script>
+<script src="js/md-data-table.js"></script>
 
-  <script>
-    // Initialize Firebase
-    var config = {
-      apiKey: "AIzaSyCbK3apehK59jNYu0i2bKBg5HBdQA8p9dg",
-      authDomain: "pruebaangularmaterial.firebaseapp.com",
-      databaseURL: "https://pruebaangularmaterial.firebaseio.com",
-      projectId: "pruebaangularmaterial",
-      storageBucket: "pruebaangularmaterial.appspot.com",
-      messagingSenderId: "777424997909"
-    };
-    firebase.initializeApp(config);
-  </script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCbK3apehK59jNYu0i2bKBg5HBdQA8p9dg",
+    authDomain: "pruebaangularmaterial.firebaseapp.com",
+    databaseURL: "https://pruebaangularmaterial.firebaseio.com",
+    projectId: "pruebaangularmaterial",
+    storageBucket: "pruebaangularmaterial.appspot.com",
+    messagingSenderId: "777424997909"
+  };
+  firebase.initializeApp(config);
+</script>
 </body>
 </html>

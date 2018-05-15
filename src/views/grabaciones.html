@@ -1,0 +1,186 @@
+<md-content ng-hide="!user" layout="column" flex>
+  <md-card>
+    <md-toolbar class="md-table-toolbar md-default" ng-hide="selected.length || filter.show">
+      <div class="md-toolbar-tools">
+        <span>Grabaciones</span>
+        <div flex></div>
+        <md-button class="md-icon-button" ng-click="filter.show = true" title="Filtrar grabaciones">
+          <md-icon>filter_list</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" ng-click="loadStuff()" title="Recargar grabaciones">
+          <md-icon>refresh</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" ng-click="addItem($event)" title="Añadir grabación">
+          <md-icon>add</md-icon>
+        </md-button>
+      </div>
+    </md-toolbar>
+
+    <md-toolbar class="md-table-toolbar md-default" ng-show="filter.show && !selected.length">
+      <div class="md-toolbar-tools">
+        <md-icon>search</md-icon>
+        <form flex name="filter.form">
+          <input type="text" ng-model="query.filter" ng-model-options="filter.options"
+                 placeholder="Escriba el id de la grabación a buscar">
+        </form>
+        <md-button class="md-icon-button" ng-click="removeFilter()" title="Restaurar filtro">
+          <md-icon>close</md-icon>
+        </md-button>
+      </div>
+    </md-toolbar>
+
+    <md-toolbar class="md-table-toolbar alternate" ng-show="options.rowSelection && selected.length">
+      <div class="md-toolbar-tools">
+        {{selected.length}} {{selected.length > 1 ? 'grabaciones seleccionadas' : 'grabación seleccionada'}}
+        <span flex></span>
+        <md-button class="md-icon-button" ng-click="borrarGrabaciones($event)"
+                   title="Borrar {{selected.length > 1 ? 'grabaciones seleccionadas' : 'grabación seleccionada'}}">
+          <md-icon style="color: white">delete</md-icon>
+        </md-button>
+      </div>
+
+    </md-toolbar>
+
+    <md-table-container>
+      <table md-table md-row-select="options.rowSelection" multiple="{{options.multiSelect}}" ng-model="selected"
+             md-progress="promise">
+        <thead md-head md-order="query.order" md-on-reorder="cargarGrabaciones">
+        <tr md-row>
+          <th md-column md-order-by="id"><span>Id</span></th>
+          <th md-column md-date md-order-by="fechaGrabacion"><span>Fecha Grabación</span></th>
+          <th md-column md-order-by="lugar"><span>Lugar</span></th>
+          <th md-column md-text md-order-by="paciente"><span>Paciente</span></th>
+          <th md-column><span>Grabación</span></th>
+          <th md-column><span>Atributos extra</span></th>
+        </tr>
+        </thead>
+        <tbody md-body>
+        <tr md-row md-select="grabacion" md-on-select="logItem" md-auto-select="options.autoSelect"
+            ng-repeat="grabacion in grabaciones.data | filter: filter.search | orderBy: query.order | limitTo: query.limit : (query.page -1) * query.limit">
+          <td md-cell>{{grabacion.id}}</td>
+          <td md-cell>{{grabacion.fechaGrabacion}}</td>
+          <td md-cell>{{grabacion.lugar}}</td>
+          <td md-cell>
+            <md-select ng-model="paciente" ng-change="actualizarPaciente(paciente, grabacion)"
+                       placeholder="Buscar un paciente">
+              <md-select-header class="selectdemoSelectHeader">
+                <input ng-model="searchTerm" type="search" placeholder="Buscar un paciente..."
+                       onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
+              </md-select-header>
+              <md-option ng-value="paciente" ng-repeat="paciente in pacientes | filter:searchTerm"
+                         ng-selected="{{ (paciente.nombre + ' ' + paciente.apellido) === grabacion.paciente ? 'true' : 'false' }}">
+                {{paciente.nombre + ' ' + paciente.apellido}}
+              </md-option>
+              <md-option ng-value="none">Sin Asignar</md-option>
+            </md-select>
+          </td>
+          <td md-cell>
+            <md-button class="md-icon-button" ng-click="previsualizarCSV($event,grabacion)"
+                       ng-show="grabacion.grabacion" title="Previsualizar grabación">
+              <md-icon>visibility</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" ng-click="exportarCSV(grabacion.grabacion)" ng-show="grabacion.grabacion"
+                       title="Descargar grabación">
+              <md-icon>cloud_download</md-icon>
+            </md-button>
+          </td>
+          <td md-cell>
+            <md-button ng-click="verAtributosExtra($event,grabacion)" ng-show="grabacion.extra"
+                       style="background: lightgrey;" title="Ver información extra">Ver
+            </md-button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </md-table-container>
+    <md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="query.limit"
+                         md-limit-options="limitOptions" md-page="query.page" md-total="{{grabaciones.count}}"
+                         md-page-select="options.pageSelect" md-boundary-links="options.boundaryLinks"
+                         md-on-paginate="cargarGrabaciones"></md-table-pagination>
+  </md-card>
+  <script type="text/ng-template" id="grabacion-dialog.template.html">
+    <md-dialog id="grabacion-dialog" aria-label="CrearGrabacion">
+      <form name="formGrabacion" ng-submit="crearGrabacion()">
+        <md-toolbar>
+          <div class="md-toolbar-tools">
+            <h2>Crear grabación</h2>
+            <span flex></span>
+            <md-button class="md-icon-button" ng-click="close(false)">
+              <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+            </md-button>
+          </div>
+        </md-toolbar>
+
+        <md-dialog-content style="max-width:800px;max-height:810px; width: auto; height: auto;">
+          <div class="md-dialog-content">
+            <div layout="row">
+              <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()"
+                         title="Añadir campo extra">
+                <md-icon md-svg-src="img/icons/add.svg"></md-icon>
+              </md-button>
+              <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 1"
+                         ng-click="quitarCampo()" title="Eliminar último campo extra creado">
+                <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
+              </md-button>
+            </div>
+
+            <div layout="row">
+              <md-input-container flex="50">
+                <label>Identificador</label>
+                <input required name="id" ng-model="grabacion.id">
+                <div ng-messages="formGrabacion.id.$error">
+                  <div ng-message="required">Campo requerido.</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container flex="50">
+                <label>Lugar</label>
+                <input required name="lugar" ng-model="grabacion.lugar" autocomplete="address-level2">
+                <div ng-messages="formGrabacion.lugar.$error">
+                  <div ng-message="required">Campo requerido.</div>
+                </div>
+              </md-input-container>
+
+            </div>
+
+            <div layout="row" ng-cloak="">
+              <md-input-container flex="50">
+                <label>F. grabación</label>
+                <md-datepicker required name="fecha" ng-model="grabacion.fecha" md-current-view="year"
+                               md-hide-icons="calendar"></md-datepicker>
+                <div ng-messages="formGrabacion.fecha.$error" ng-show="formGrabacion.fecha.$touched">
+                  <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container flex="50">
+                <label>Paciente</label>
+                <md-select name="paciente" ng-model="grabacion.paciente" md-on-close="limpiarBuscador()"
+                           md-on-open="cargarPacientes()" class="selectPacientes">
+                  <md-select-header class="selectdemoSelectHeader">
+                    <input ng-model="searchTerm" type="search" placeholder="Buscar un paciente..."
+                           onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
+                  </md-select-header>
+                  <md-option ng-value="paciente" ng-repeat="paciente in pacientes | filter:searchTerm" ng-cloak="">
+                    {{paciente.nombre + " " +paciente.apellido}}
+                  </md-option>
+                </md-select>
+              </md-input-container>
+            </div>
+
+            <div layout="row" flex="100">
+              <aps-upload-file></aps-upload-file>
+            </div>
+            <div id="camposExtra" layout="column" flex="100"></div>
+            <input type="hidden" ng-model="abc"/>
+            <div style="text-align: center;">
+              <md-button type="submit" class="md-raised md-primary" ng-disabled="formGrabacion.$invalid">Crear
+                grabación
+              </md-button>
+            </div>
+          </div>
+        </md-dialog-content>
+      </form>
+    </md-dialog>
+  </script>
+</md-content>
