@@ -63,7 +63,7 @@ app.controller('BorrarPacienteController', function ($scope, $rootScope, $timeou
         childData['key'] = pacienteHijo.key;
         pacientes.push({
           id: childData.key,
-          fecha: childData.fechaNacimiento,
+          fecha: childData.fechaGrabacion,
           value: (childData.nombre + " " + childData.apellido).toLowerCase(),
           display: childData.nombre + " " + childData.apellido
         })

@@ -1,10 +1,12 @@
 app.controller('CrearPacienteController', function ($scope, $compile, $timeout, $mdDialog, $log, $mdToast) {
-  let database = firebase.database();
+
   $scope.paciente = {
     nombre: '',
-    apellido: '',
-    fecha: '',
+    fecha: new Date(),
+    inicioEnfermedad: (new Date()).getFullYear(),
+    clasificacion: '',
     altura: '',
+    peso: '',
     sexo: '',
     grabacion: '',
     atributosExtraNombre: [],
@@ -13,42 +15,54 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
   $scope.grabaciones = cargarGrabaciones();
   $scope.grabacion = null;
   $scope.searchTerm = '';
-  $scope.nCampoExtra = 1;
+  $scope.nCampoExtra = 0;
+  $scope.numeroAtributos = [];
 
   $scope.crearPaciente = function () {
-    let rootRef = firebase.database().ref('pacientes/');
+    let rootRef = firebase.database().ref('pacientes/' + getCookie('grupo'));
     let newStoreRef = rootRef.push();
     let fechaString = Date.parse($scope.paciente.fecha.toString());
     let fecha = new Date(fechaString);
+    let fechaFormateada = moment(fecha).format('DD/MM/YYYY');
     let atributosExtraRef = newStoreRef.child("extra");
     let grabacionesRef = newStoreRef.child("grabaciones");
     let atributosExtra = {};
     let grabacion = {};
-
     let atributosObligatorios = {
-      "nombre": $scope.paciente.nombre,
-      "apellido": $scope.paciente.apellido,
-      "fechaNacimiento": fecha.getDate() + "/" + (fecha.getMonth() + 1) + "/" + fecha.getFullYear(),
-      "sexo": $scope.paciente.sexo
+      "id": CryptoJS.AES.encrypt($scope.paciente.nombre, getCookie('clave')).toString(),
+      "fechaNacimiento": CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString(),
+      "sexo": CryptoJS.AES.encrypt($scope.paciente.sexo, getCookie('clave')).toString(),
+      "grupo": CryptoJS.AES.encrypt(getCookie('grupo'), getCookie('clave')).toString(),
+      "inicioEnfermedad": CryptoJS.AES.encrypt($scope.paciente.inicioEnfermedad.toString(), getCookie('clave')).toString(),
+      "clasificacion":  CryptoJS.AES.encrypt($scope.paciente.clasificacion, getCookie('clave')).toString()
     };
 
-    for (let i = 1; i < $scope.nCampoExtra; i++) {//Adjuntamos los campos extra añadidos
-      if ($scope.selectedItem[i] !== null && $scope.paciente.atributosExtraValor[i] !== "") {
-        atributosExtra[$scope.selectedItem[i].display] = $scope.paciente.atributosExtraValor[i];
+    for (let i = 0; i < $scope.nCampoExtra; i++) {//Adjuntamos los campos extra añadidos
+      if ($scope.selectedItem[i] !== null && $scope.atributosExtraValor[i] !== "") {
+        atributosExtra[$scope.selectedItem[i].display] = CryptoJS.AES.encrypt($scope.atributosExtraValor[i].toString(), getCookie('clave')).toString();
       }
     }
     atributosExtraRef.push(atributosExtra);
 
-    if ($scope.altura !== '') {
-      atributosObligatorios["altura"] = $scope.paciente.altura;
+    if ($scope.paciente.altura !== '' && $scope.paciente.altura !== null) {
+      atributosObligatorios["altura"] = CryptoJS.AES.encrypt($scope.paciente.altura.toString(), getCookie('clave')).toString();
+    }
+
+    if ($scope.paciente.peso !== '' && $scope.paciente.peso !== null) {
+      console.log($scope.paciente.peso);
+      atributosObligatorios["peso"] = CryptoJS.AES.encrypt($scope.paciente.peso.toString(), getCookie('clave')).toString();
     }
 
     if ($scope.paciente.grabacion !== '') {
       grabacion[$scope.paciente.grabacion.key] = true;
       grabacionesRef.push(grabacion);
+      let fecha = $scope.paciente.grabacion.fechaGrabacion.value.split("/");
+      let time = new Date(fecha[2] + "-" + fecha[1] + "-" + fecha[0]);
       firebase.database().ref('grabaciones/').child($scope.paciente.grabacion.key).update({
-        'paciente': $scope.paciente.nombre + " " + $scope.paciente.apellido,
-        'pacienteKey': newStoreRef.key
+        'paciente': CryptoJS.AES.encrypt($scope.paciente.nombre, getCookie('clave')).toString(),
+        'pacienteKey': CryptoJS.AES.encrypt(newStoreRef.key, getCookie('clave')).toString(),
+        'edadPaciente': CryptoJS.AES.encrypt(calcularEdad($scope.paciente.fecha).toString(), getCookie('clave')).toString(),
+        'edadGrabacion': CryptoJS.AES.encrypt(calcularEdadEnFecha($scope.paciente.fecha, time).toString(), getCookie('clave')).toString()
       });
     }
 
@@ -68,11 +82,41 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
   function cargarGrabaciones() {
     let grabaciones = [];
     let database = firebase.database();
-    let grabacionesRef = database.ref('grabaciones');
+    let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
     $scope.promise = grabacionesRef.once('value', function (grabacion) {
       grabacion.forEach(function (grabacionHija) {
         let childData = grabacionHija.val();
-        if (childData.paciente === undefined || childData.paciente === "") {
+        if ((childData.paciente === undefined || childData.paciente === "")) {
+          for (let clave in childData){
+            if (childData.hasOwnProperty(clave) && clave !== 'extra' && clave !== 'grabacion' && clave !== 'fechaGrabacion' && clave !== 'notasVideo' && clave !== 'video') {
+              if ((clave === 'edadPaciente' || clave === 'edadGrabacion') && childData[clave] !== undefined  && childData[clave] !== '') {
+                childData[clave] = Number(CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8));
+              } else {
+                childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+              }
+            } else if (clave === 'extra') {
+              for (let claveExtra in childData[clave]) {
+                childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+              }
+            } else if (clave === 'fechaGrabacion') {
+              let dateString = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+              let dateParts = dateString.split("/");
+              let dateObjectGrabacion = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+              childData[clave] = {'value': dateString, 'ts': dateObjectGrabacion.getTime()};
+            } else if (clave === 'notasVideo') {
+              for (let claveExtra in childData[clave]) {
+                for (let claveExtraExtra in childData[clave][claveExtra]) {
+                  childData[clave][claveExtra][claveExtraExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra][claveExtraExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                }
+              }
+            }else if (clave === 'video'){
+              childData[clave] = childData[clave];
+              childData['videoMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
+            }else if (clave === 'grabacion'){
+              childData[clave] = childData[clave];
+              childData['grabacionMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
+            }
+          }
           childData['key'] = grabacionHija.key;
           grabaciones.push(childData);
         }
@@ -88,6 +132,11 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
   };
 
   // ----------------Gestión campos extra---------------//
+  $scope.atributosExtraNombre = [];
+  $scope.atributosExtraValor = [];
+  $scope.selectedItem = [];
+  $scope.searchText = [];
+  $scope.searchTerm = '';
   $scope.simulateQuery = false;
   $scope.isDisabled = false;
   $scope.extraCreado = false;
@@ -99,28 +148,25 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
 
   //Crear campo extra al final
   $scope.crearCampo = function () {
-    let template = `<div id='campoExtra${$scope.nCampoExtra}' style="max-height: 95px;"><md-input-container flex="50"><md-autocomplete md-no-cache="noCache" md-input-name="campoExtra" md-input-id="searchinput" md-selected-item="selectedItem[${$scope.nCampoExtra}]" md-search-text-change="searchTextChange(searchText[${$scope.nCampoExtra}])" md-search-text="searchText[${$scope.nCampoExtra}]" md-selected-item-change="selectedItemChange(item)" md-items="item in querySearch(searchText[${$scope.nCampoExtra}])" md-item-text="item.display" md-min-length="0" md-floating-label="Atributo extra ${$scope.nCampoExtra}"><md-item-template style="color: #9ea1a4;"><span md-highlight-text="searchText[${$scope.nCampoExtra}]" md-highlight-flags="^i">{{item.display}}</span></md-item-template><md-not-found ng-hide="extraCreado"><md-button ng-hide="extraCreado" ng-click="crearCampoExtra(searchText[${$scope.nCampoExtra}], ${$scope.nCampoExtra})" style="width: 100%; text-align: center;">Crear!</md-button></md-not-found><div ng-messages="formPaciente.atributoExtra${$scope.nCampoExtra}.$error" ng-if="formPaciente.atributoExtra${$scope.nCampoExtra}.$touched"><div ng-message="required">Campo requerido</div></div></md-autocomplete></md-input-container><md-input-container flex='50'><label>Valor atributo extra ${$scope.nCampoExtra}</label><input id='valorCampoExtra' name='atributosExtraValor[${$scope.nCampoExtra}]' ng-model='paciente.atributosExtraValor[${$scope.nCampoExtra}]'><div ng-messages="formPaciente.atributosExtraValor[${$scope.nCampoExtra}].$error"><div ng-message="required">Campo requerido</div></div></md-input-container></div>`;
-    let html = $compile(template)($scope);
-    angular.element(document.getElementById("camposExtra")).append(html);
+    $scope.atributosExtraValor[$scope.nCampoExtra]='';
+    $scope.numeroAtributos[$scope.nCampoExtra] = $scope.nCampoExtra;
     $scope.nCampoExtra++;
   };
 
   //Eliminar ultimo campo extra creado
   $scope.quitarCampo = function () {
-    if ($scope.nCampoExtra > 1) {
-      let nCampoExtra = $scope.nCampoExtra - 1;
-      angular.element(document.getElementById("campoExtra" + nCampoExtra)).remove();
+    if ($scope.nCampoExtra > 0) {
+      $scope.atributosExtraNombre[$scope.nCampoExtra] = '';
+      $scope.atributosExtraValor[$scope.nCampoExtra] = '';
+      $scope.numeroAtributos.pop();
       $scope.nCampoExtra--;
-      $scope.paciente.atributosExtraNombre[nCampoExtra] = '';
-      $scope.paciente.atributosExtraValor[nCampoExtra] = '';
     }
   };
 
-  function crearCampoExtra(campoExtra, n) {
-    console.log($scope.extraCreado);
-    firebase.database().ref('camposExtraPacientes/').push(campoExtra).then(function (snapshot) {
+  function crearCampoExtra(n) {
+    firebase.database().ref('camposExtraPacientes/').push($scope.searchText[n]).then(function (snapshot) {
       $scope.nombreAtributosExtra = loadAll();
-      showToast("Campo extra " + campoExtra + " creado");
+      showToast("Campo extra " + $scope.searchText[n] + " creado");
       $scope.$apply(function () {
         $scope.searchText[n] = ""; //Reiniciar texto de busqueda para eliminar el botón de CREAR
       });
@@ -140,7 +186,7 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
 
   //Cambio de texto en buscador
   function searchTextChange(text) {
-    formPaciente.campoExtra.missing = true;
+    // formPaciente.campoExtra.missing = true;
   }
 
   //Cambio de Item seleccionado
@@ -195,6 +241,41 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
       $mdDialog.hide({creado: false});
     }
   };
+
+  function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  function calcularEdad(birthDate) {
+    var today = new Date();
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  function calcularEdadEnFecha(birthDate, fecha) {
+    var age = fecha.getFullYear() - birthDate.getFullYear();
+    var m = fecha.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && fecha.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
 
 
 }).config(function ($mdDateLocaleProvider) {//Personalizar calendario en español

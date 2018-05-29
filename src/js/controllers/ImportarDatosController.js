@@ -7,8 +7,105 @@ app.controller('importarDatosController', function ($scope, $window) {
   var pacientes;
   $scope.pacientes = "";
   $scope.files = "";
+  let input = $(document.querySelector('#input'));
+  function addSourceToVideo(element, src) {
+    var source = document.createElement('source');
 
-})
+    source.src = src;
+
+    element.appendChild(source);
+  }
+
+  input.on('change', function (e) {
+
+
+    //--------------------------------------------------//
+      let file = e.target.files[0];
+
+      let reader = new FileReader();
+      reader.onload = function (e) {
+        let videoEncriptado = CryptoJS.AES.encrypt(e.target.result, getCookie('clave'));
+        console.log(videoEncriptado);
+        let videoDesencriptado = CryptoJS.AES.decrypt(videoEncriptado, getCookie('clave')).toString(CryptoJS.enc.Latin1);
+        var videoNode = document.getElementsByTagName('video')[0];
+        let blob = new Blob([videoDesencriptado]);
+        let url = URL.createObjectURL(blob);
+        let element = document.createElement('a');
+        videoNode.setAttribute('href', videoDesencriptado);
+        addSourceToVideo(videoNode, videoDesencriptado);
+        videoNode.play();
+        element.setAttribute('href', videoDesencriptado);
+        element.setAttribute('download', 'Blurred Bokeh Video 2.mp4');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+
+      };
+    reader.readAsDataURL(file);
+      //--------------------------------------------------//
+      // let file = e.target.files[0];
+      // var type = file.type;
+      // var videoNode = document.querySelector('video');
+      // var canPlay = videoNode.canPlayType(type);
+      // if (canPlay === '') canPlay = 'no';
+      // var message = 'Can play type "' + type + '": ' + canPlay;
+      // var isError = canPlay === 'no';
+      //
+      // if (isError) {
+      //   console.log(message);
+      // }
+      //
+      // var fileURL = URL.createObjectURL(file);
+      // videoNode.src = fileURL;
+    }
+  );
+
+  $scope.verVideoLocal = function () {
+
+
+  };
+
+  $scope.verVideo = function () {
+    firebase.storage().ref('videos/').child('My Video 1.mp4').getDownloadURL().then(function (url) {
+      var xhr = new XMLHttpRequest();
+      // xhr.responseType = 'application/octet-stream';
+      xhr.onload = function(event) {
+        var videoEncriptado = xhr.response;
+        let videoDesencriptado = CryptoJS.AES.decrypt(videoEncriptado, getCookie('clave')).toString(CryptoJS.enc.Latin1);
+        var videoNode = document.getElementsByTagName('video')[0];
+        videoNode.setAttribute('href', videoDesencriptado);
+        addSourceToVideo(videoNode, videoDesencriptado);
+        videoNode.play();
+      };
+      xhr.open('GET', url);
+      xhr.send();
+    });
+  };
+
+  function blobToFile(theBlob, fileName) {
+    //A Blob() is almost a File() - it's just missing the two properties below which we will add
+    theBlob.lastModifiedDate = new Date();
+    theBlob.name = fileName;
+    return theBlob;
+  }
+
+  function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+});
 
 function conversorJSON(csv, name) {
 
@@ -214,9 +311,9 @@ function conversorJSON(csv, name) {
     var currentline = lines[i].split(";");
 
     tiempoFormatoHora = currentline[0].split(":");
-    if(tiempoFormatoHora[1] >= 1){
-      tiempo = parseFloat(tiempoFormatoHora[2]) + (60*parseFloat(tiempoFormatoHora[1]));
-    }else {
+    if (tiempoFormatoHora[1] >= 1) {
+      tiempo = parseFloat(tiempoFormatoHora[2]) + (60 * parseFloat(tiempoFormatoHora[1]));
+    } else {
       tiempo = parseFloat(tiempoFormatoHora[2]);
     }
 
@@ -610,3 +707,4 @@ function download(content, fileName, contentType) {
   a.download = fileName;
   a.click();
 }
+

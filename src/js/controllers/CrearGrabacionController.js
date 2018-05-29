@@ -1,14 +1,14 @@
 app.controller('CrearGrabacionController', function ($scope, $compile, $window, $timeout, $mdDialog, $mdToast) {
   $scope.grabacion = {
     id: '',
-    fecha: '',
+    fecha: new Date(),
     lugar: '',
     paciente: '',
     atributosExtraNombre: [],
     atributosExtraValor: []
   };
 
-  $scope.nCampoExtra = 1;
+  $scope.nCampoExtra = 0;
   $scope.files = "";
   $scope.fileName = "";
   $scope.pacientes = cargarPacientes();
@@ -17,22 +17,24 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
 
 
   $scope.crearGrabacion = function () {
-    let rootRef = firebase.database().ref('grabaciones/');
+    let rootRef = firebase.database().ref('grabaciones/' + getCookie('grupo'));
     let newStoreRef = rootRef.push();
     let atributosExtraRef = newStoreRef.child("extra");
     let atributosExtra = {};
     let fechaString = Date.parse($scope.grabacion.fecha.toString());
     let fecha = new Date(fechaString);
+    let fechaFormateada = moment(fecha).format('DD/MM/YYYY');
 
     let atributosObligatorios = {
-      "id": $scope.grabacion.id,
-      "lugar": $scope.grabacion.lugar,
-      "fechaGrabacion": fecha.getDate() + "/" + (fecha.getMonth() + 1) + "/" + fecha.getFullYear()
+      "id": CryptoJS.AES.encrypt($scope.grabacion.id, getCookie('clave')).toString(),
+      "lugar": CryptoJS.AES.encrypt($scope.grabacion.lugar, getCookie('clave')).toString(),
+      "fechaGrabacion": CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString(),
+      "grupo": CryptoJS.AES.encrypt(getCookie('grupo'), getCookie('clave')).toString(),
     };
 
-    for (let i = 1; i < $scope.nCampoExtra; i++) {
-      if ($scope.selectedItem[i] !== null && $scope.paciente.atributosExtraValor[i] !== "") {
-        atributosExtra[$scope.selectedItem[i].display] = $scope.paciente.atributosExtraValor[i];
+    for (let i = 0; i < $scope.nCampoExtra; i++) {
+      if ($scope.selectedItem[i] !== null && $scope.atributosExtraValor[i] !== "") {
+        atributosExtra[$scope.selectedItem[i].display] = CryptoJS.AES.encrypt($scope.atributosExtraValor[i].toString(), getCookie('clave')).toString();
       }
     }
     atributosExtraRef.push(atributosExtra);
@@ -40,18 +42,37 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
     if ($scope.files[0]) {//Si se ha seleccionado un fichero
       let reader = new FileReader();
       let fileId = $scope.files[0].name.split(".")[0] + "-" + guid() + ".csv";
-      almacenarFicheroGrabacion($scope.files[0], fileId);
+      // almacenarFicheroGrabacion($scope.files[0], fileId);
       reader.onload = function () {
         let file = reader.result;
+        almacenarFicheroGrabacion(file, fileId);
         subirFicheroConvertidoJSON(file, fileId);
       };
       atributosObligatorios['grabacion'] = fileId;
       reader.readAsText($scope.files[0]);
     }
 
+    if ($scope.videoFiles !== undefined && $scope.videoFiles[0]) {//Si se ha seleccionado un fichero de video
+      let videoFile = $scope.videoFiles[0];
+      let videoFileId = videoFile.name.split(".")[0] + "-" + guid() + "." + videoFile.name.split(".")[1];
+      almacenarFicheroGrabacionVideo($scope.videoFiles[0], videoFileId);
+      atributosObligatorios['video'] = videoFileId;
+    }
+
+
     if ($scope.grabacion.paciente) {//Si se ha asignado la grabacion a un paciente
-      atributosObligatorios['pacienteKey'] = $scope.grabacion.paciente.key;
-      atributosObligatorios['paciente'] = $scope.grabacion.paciente.nombre + " " + $scope.grabacion.paciente.apellido;
+      let fechaNacimientoPartida = $scope.grabacion.paciente.fechaNacimiento.split("/");
+      let fechaNacimiento = new Date(fechaNacimientoPartida[2], fechaNacimientoPartida[1] - 1, fechaNacimientoPartida[0]);
+
+      // let fechaGrabacionPartida = $scope.grabacion.fecha.value.split("/");
+      // let fechaGrabacion = new Date(fechaGrabacionPartida[2], fechaGrabacionPartida[1] - 1, fechaGrabacionPartida[0]);
+
+      atributosObligatorios['pacienteKey'] = CryptoJS.AES.encrypt($scope.grabacion.paciente.key, getCookie('clave')).toString();
+      atributosObligatorios['paciente'] = CryptoJS.AES.encrypt($scope.grabacion.paciente.id, getCookie('clave')).toString();
+      atributosObligatorios['edadPaciente'] = CryptoJS.AES.encrypt(calcularEdad(fechaNacimiento).toString(), getCookie('clave')).toString();
+       atributosObligatorios['edadGrabacion'] = CryptoJS.AES.encrypt(calcularEdadEnFecha(fechaNacimiento, $scope.grabacion.fecha).toString(), getCookie('clave')).toString();
+
+      firebase.database().ref('pacientes/').child($scope.grabacion.paciente.key).child('grabaciones').child(newStoreRef.key).set(true);
     } else {
       atributosObligatorios['pacienteKey'] = '';
       atributosObligatorios['paciente'] = '';
@@ -67,14 +88,34 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
     })
   };
 
+  function almacenarFicheroGrabacionVideo(file, fileId) {
+
+    let storageRef = firebase.storage().ref('videos/' + getCookie('grupo') + "/" + fileId);
+
+    let reader = new FileReader();
+    reader.onload = function (e) {
+      let encriptado = CryptoJS.AES.encrypt(e.target.result, getCookie('clave'));
+      let blobEncriptado = new Blob([encriptado], {type: "data:application/octet-stream"});
+      let task = storageRef.put(blobEncriptado);
+      task.on('state_changed', function progress(snapshot) {
+      }, function error(err) {
+        console.log(err);
+      }, function complete() {
+        console.log("fichero video subido");
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
   function almacenarFicheroGrabacion(file, id) {
-    // let storageRef = firebase.storage().ref('grabaciones/' + $scope.files[0].name);
-    let storageRef = firebase.storage().ref('grabaciones/' + id);
+    let storageRef = firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + id);
     let metadata = {
       contentType: 'text/csv',
       name: file.name
     };
-    let task = storageRef.put(file, metadata);
+    // console.log(file);
+    // console.log(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
+    let task = storageRef.putString(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
     task.on('state_changed', function progress(snapshot) {
     }, function error(err) {
       console.log(err);
@@ -99,15 +140,11 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
         joint['inf'] = linea[k];
         joints[(k - 1) / 4] = joint; //Añadimos el joint al conjunto de joints
       }
-      camara[ms] = joints;//Añadimos los joints a la unidad de tiempo
+      camara[linea[0]] = joints;//Añadimos los joints a la unidad de tiempo
     }
 
-    let rootRef = firebase.database().ref('grabacionesJSON').child(fileId.split(".")[0]);
-    rootRef.set(camara).then(fun => {
-      console.log("fichero subido");
-    }).catch(err => {
-      console.log("Error subiendo fichero");
-    })
+    file = JSON.stringify(camara);
+    firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" +  fileId.split(".")[0] + ".json").putString(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
   }
 
 
@@ -120,12 +157,23 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
   function cargarPacientes() {
     let pacientes = [];
     let database = firebase.database();
-    let pacientesRef = database.ref('pacientes');
+    let pacientesRef = database.ref('pacientes/' + getCookie('grupo'));
     $scope.promise = pacientesRef.once('value', function (paciente) {
       paciente.forEach(function (pacienteHijo) {
         let childData = pacienteHijo.val();
-        childData['key'] = pacienteHijo.key;
-        pacientes.push(childData);
+        if (CryptoJS.AES.decrypt(childData['grupo'], getCookie('clave')).toString(CryptoJS.enc.Utf8) === getCookie('grupo')) {
+          for (let clave in childData) {
+            if (childData.hasOwnProperty(clave) && clave !== 'extra') {
+              childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+            } else {
+              for (let claveExtra in childData[clave]) {
+                childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+              }
+            }
+          }
+          childData['key'] = pacienteHijo.key;
+          pacientes.push(childData);
+        }
       });
       return pacientes;
     });
@@ -141,6 +189,12 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
   $scope.simulateQuery = false;
   $scope.isDisabled = false;
   $scope.extraCreado = false;
+  $scope.atributosExtraNombre = [];
+  $scope.atributosExtraValor = [];
+  $scope.selectedItem = [];
+  $scope.searchText = [];
+  $scope.searchTerm = '';
+  $scope.numeroAtributos = [];
   $scope.nombreAtributosExtra = loadAll();
   $scope.querySearch = querySearch;
   $scope.selectedItemChange = selectedItemChange;
@@ -150,31 +204,27 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
 
   //Crear campo extra al final
   $scope.crearCampo = function () {
-    let template = `<div id='campoExtra${$scope.nCampoExtra}' style="max-height: 95px;"><md-input-container flex="50"><md-autocomplete md-no-cache="noCache" md-input-name="campoExtra" md-input-id="searchinput" md-selected-item="selectedItem[${$scope.nCampoExtra}]" md-search-text-change="searchTextChange(searchText[${$scope.nCampoExtra}])" md-search-text="searchText[${$scope.nCampoExtra}]" md-selected-item-change="selectedItemChange(item)" md-items="item in querySearch(searchText[${$scope.nCampoExtra}])" md-item-text="item.display" md-min-length="0" md-floating-label="Atributo extra ${$scope.nCampoExtra}"><md-item-template style="color: #9ea1a4;"><span md-highlight-text="searchText[${$scope.nCampoExtra}]" md-highlight-flags="^i">{{item.display}}</span></md-item-template><md-not-found ng-hide="extraCreado"><md-button ng-hide="extraCreado" ng-click="crearCampoExtra(searchText[${$scope.nCampoExtra}], ${$scope.nCampoExtra})" style="width: 100%; text-align: center;">Crear!</md-button></md-not-found><div ng-messages="formPaciente.atributoExtra${$scope.nCampoExtra}.$error" ng-if="formPaciente.atributoExtra${$scope.nCampoExtra}.$touched"><div ng-message="required">Campo requerido</div></div></md-autocomplete></md-input-container><md-input-container flex='50'><label>Valor atributo extra ${$scope.nCampoExtra}</label><input id='valorCampoExtra' name='atributosExtraValor[${$scope.nCampoExtra}]' ng-model='paciente.atributosExtraValor[${$scope.nCampoExtra}]'><div ng-messages="formPaciente.atributosExtraValor[${$scope.nCampoExtra}].$error"><div ng-message="required">Campo requerido</div></div></md-input-container></div>`;
-    let html = $compile(template)($scope);
-    angular.element(document.getElementById("camposExtra")).append(html);
+    $scope.atributosExtraValor[$scope.nCampoExtra]='';
+    $scope.numeroAtributos[$scope.nCampoExtra] = $scope.nCampoExtra;
     $scope.nCampoExtra++;
   };
 
   //Eliminar ultimo campo extra creado
   $scope.quitarCampo = function () {
-    if ($scope.nCampoExtra > 1) {
-      let nCampoExtra = $scope.nCampoExtra - 1;
-      angular.element(document.getElementById("campoExtra" + nCampoExtra)).remove();
+    if ($scope.nCampoExtra > 0) {
+      $scope.atributosExtraNombre[$scope.nCampoExtra] = '';
+      $scope.atributosExtraValor[$scope.nCampoExtra] = '';
+      $scope.numeroAtributos.pop();
       $scope.nCampoExtra--;
-      $scope.grabacion.atributosExtraNombre[nCampoExtra] = '';
-      $scope.grabacion.atributosExtraValor[nCampoExtra] = '';
     }
-    $scope.abc += 1;
   };
 
-  function crearCampoExtra(campoExtra, n) {
-    console.log($scope.extraCreado);
-    firebase.database().ref('camposExtraGrabaciones/').push(campoExtra).then(function (snapshot) {
+  function crearCampoExtra(n) {
+    firebase.database().ref('camposExtraGrabaciones/').push($scope.searchText[n]).then(function (snapshot) {
       $scope.nombreAtributosExtra = loadAll();
-      showToast("Campo extra " + campoExtra + " creado");
+      showToast("Campo extra " + $scope.searchText[n] + " creado");
       $scope.$apply(function () {
-        $scope.searchText[n] = "";
+        $scope.searchText[n] = ""; //Reiniciar texto de busqueda para eliminar el botón de CREAR
       });
     }).catch(function (error) {
       console.error(error);
@@ -191,7 +241,7 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
 
   //Cambio de texto en buscador
   function searchTextChange(text) {
-    formGrabacion.campoExtra.missing = true;
+    // formGrabacion.campoExtra.missing = true;
   }
 
   //Cambio de Item seleccionado
@@ -235,6 +285,22 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
       .hideDelay(3000));
   }
 
+  function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
   function guid() {
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
       s4() + '-' + s4() + s4() + s4();
@@ -254,6 +320,26 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
     }
   };
 
+  function calcularEdad(birthDate) {
+    var today = new Date();
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  function calcularEdadEnFecha(birthDate, fecha) {
+    console.log(birthDate, fecha);
+    var age = fecha.getFullYear() - birthDate.getFullYear();
+    var m = fecha.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && fecha.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
 
 }).directive('apsUploadFile', apsUploadFile);
 
@@ -262,50 +348,94 @@ function apsUploadFile() {
   return {
     restrict: 'E',
     // language=HTML
-    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input required="" name="fileName" id="textInput" ng-model="fileName" type="text" placeholder="Fichero no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>',
+    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input required="" name="fileName" id="textInput" ng-model="fileName" type="text" placeholder="CSV no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>' +
+    '<input id="videoFileInput" type="file" class="ng-hide" ng-model="videoFiles"> <md-button id="uploadVideoButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input name="videoFileName" id="videoTextInput" ng-model="videoFileName" type="text" placeholder="Video no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.videoFileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>',
     link: apsUploadFileLink
   };
 }
 
 function apsUploadFileLink(scope, element) {
   let input = $(element[0].querySelector('#fileInput'));
+  let videoInput = $(element[0].querySelector('#videoFileInput'));
   let button = $(element[0].querySelector('#uploadButton'));
+  let videoButton = $(element[0].querySelector('#uploadVideoButton'));
   let textInput = $(element[0].querySelector('#textInput'));
+  let textVideoInput = $(element[0].querySelector('#videoTextInput'));
 
   if (input.length && button.length && textInput.length) {
     button.click(function () {
       input.click();
-      console.log("click");
     });
     textInput.click(function () {
       input.click();
     });
   }
 
+  if (videoInput.length && videoButton.length && textVideoInput.length) {
+    videoButton.click(function () {
+      videoInput.click();
+    });
+    textVideoInput.click(function () {
+      videoInput.click();
+    });
+  }
+
   //Cuando se selecciona un fichero se guarda en $scope.files y se actualiza el input con su nombre
   input.on('change', function (e) {
       let files = e.target.files;
+      console.log(files);
       scope.files = files;
       if (files[0]) {
         scope.fileName = files[0].name;
         if (files[0].name.split(".")[1].localeCompare("csv") !== 0) {
-          almacenarFicheroGrabacionVideo(files[0]);
+          console.log("No es CSV")
         }
       }
       scope.$apply();
     }
   );
 
-  function almacenarFicheroGrabacionVideo(file) {
-    // let storageRef = firebase.storage().ref('grabaciones/' + $scope.files[0].name);
-    let storageRef = firebase.storage().ref('videos/' + file.name);
-    let task = storageRef.put(file);
-    task.on('state_changed', function progress(snapshot) {
-    }, function error(err) {
-      console.log(err);
-    }, function complete() {
-      console.log("fichero subido");
-    });
+  videoInput.on('change', function (e) {
+      let files = e.target.files;
+      console.log(files);
+      scope.videoFiles = files;
+      if (files[0]) {
+        scope.videoFileName = files[0].name;
+        if (files[0].name.split(".")[1].localeCompare("csv") === 0) {
+          // almacenarFicheroGrabacionVideo(files[0]);
+          console.log("no es video");
+        }
+      }
+      scope.$apply();
+    }
+  );
+
+
+  function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  function guid() {
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+      s4() + '-' + s4() + s4() + s4();
+  }
+
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
   }
 }
 

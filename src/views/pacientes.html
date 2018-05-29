@@ -1,17 +1,39 @@
 <md-content ng-hide="!user" layout="column" flex>
+  <div ng-hide="!configuracion" id="configuracion" class="check-element animate-show-hide">
+    <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px; height: 100%;">
+      <legend class="demo-legend" style="color: #3F51B5;"><b>Configuración</b></legend>
+      <div layout="row" layout-wrap="" flex="" layout-align="center">
+        <md-checkbox aria-label="Select All" ng-checked="isChecked()" md-indeterminate="isIndeterminate()" ng-click="toggleAll()">
+          <b><span ng-if="isChecked()">De-</span>Seleccionar todas</b>
+        </md-checkbox>
+
+        <md-checkbox ng-checked="exists(columna, seleccionado)" ng-click="toggle(columna, seleccionado)" ng-repeat="columna in tabla">
+          {{ columna }}
+        </md-checkbox>
+      </div>
+    </fieldset>
+  </div>
+  <br>
   <md-card>
     <md-toolbar class="md-table-toolbar md-default" ng-hide="selected.length || filter.show">
       <div class="md-toolbar-tools">
         <span>Pacientes</span>
         <div flex></div>
-        <md-button class="md-icon-button" ng-click="filter.show = true" title="Filtrar pacientes">
+        <md-button class="md-icon-button" ng-click="filter.show = true">
+          <md-tooltip>Filtrar pacientes</md-tooltip>
           <md-icon>filter_list</md-icon>
         </md-button>
-        <md-button class="md-icon-button" ng-click="loadStuff()" title="Recargar pacientes">
+        <md-button class="md-icon-button" ng-click="loadStuff()">
+          <md-tooltip>Recargar pacientes</md-tooltip>
           <md-icon>refresh</md-icon>
         </md-button>
-        <md-button class="md-icon-button" ng-click="addItem($event)" title="Añadir paciente">
+        <md-button class="md-icon-button" ng-click="addItem($event)">
+          <md-tooltip>Añadir paciente</md-tooltip>
           <md-icon>add</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" ng-click="configuracion = !configuracion">
+          <md-tooltip>Configuración</md-tooltip>
+          <md-icon>settings</md-icon>
         </md-button>
       </div>
     </md-toolbar>
@@ -43,41 +65,84 @@
 
     <md-table-container>
       <table md-table md-row-select="options.rowSelection" multiple="{{options.multiSelect}}" ng-model="selected"
-             md-progress="promise">
-        <thead md-head md-order="query.order" md-on-reorder="cargarPacientes">
-        <tr md-row>
-          <th md-column md-order-by="nombre"><span>Nombre</span></th>
-          <th md-column md-date md-order-by="fechaNacimiento"><span>Fecha Nacimiento</span></th>
-          <th md-column md-order-by="sexo"><span>Sexo</span></th>
-          <th md-column md-numeric md-order-by="altura"><span>Altura(cm)</span></th>
-          <th md-column><span>Grabaciones</span></th>
-          <th md-column><span>Atributos extra</span></th>
+             md-progress="promise" style="width: auto;">
+        <thead md-head md-order="query.order">
+        <tr md-row >
+          <th md-column md-order-by="id" ><span class="cabecera">Identificador</span></th>
+          <th md-column md-numeric md-order-by="fechaNacimiento.ts"  ng-show="exists('Fecha nacimiento', seleccionado)"><span class="cabecera">Fecha Nacimiento</span></th>
+          <th md-column md-numeric md-order-by="edad" ng-show="exists('Edad', seleccionado)"><span class="cabecera">Edad</span></th>
+          <th md-column md-order-by="sexo" ng-show="exists('Sexo', seleccionado)"><span class="cabecera">Sexo</span></th>
+          <th md-column md-numeric md-order-by="altura" ng-show="exists('Altura', seleccionado)"><span class="cabecera">Altura(cm)</span></th>
+          <th md-column md-numeric md-order-by="peso" ng-show="exists('Peso', seleccionado)"><span class="cabecera">Peso</span></th>
+          <th md-column md-numeric md-order-by="inicioEnfermedad" ng-show="exists('Inicio enfermedad', seleccionado)"><span class="cabecera">Inicio enfermedad</span></th>
+          <th md-column md-order-by="clasificacion" ng-show="exists('Clasificación', seleccionado)"><span class="cabecera">Clasificación</span></th>
+          <th md-column ng-show="exists('Grabaciones', seleccionado)"><span class="cabecera">Grabaciones</span></th>
+          <th md-column ng-show="exists('Atributos extra', seleccionado)"><span class="cabecera">Atributos extra</span></th>
         </tr>
         </thead>
         <tbody md-body>
         <tr md-row md-select="paciente" md-on-select="logItem" md-auto-select="options.autoSelect"
             ng-repeat="paciente in pacientes.data | filter: filter.search | orderBy: query.order | limitTo: query.limit : (query.page -1) * query.limit">
-          <td md-cell>{{paciente.nombre + " " + paciente.apellido}}</td>
-          <td md-cell>{{paciente.fechaNacimiento}}</td>
-          <td md-cell>{{paciente.sexo}}</td>
-          <td md-cell>{{paciente.altura}}</td>
-          <td md-cell>
-            <md-button ng-click="redirect('grabaciones/'+paciente.nombre + ' ' + paciente.apellido)"
-                       style="background: lightgrey;" ng-show="paciente.grabaciones"
-                       title="Ver grabaciones de {{paciente.nombre + ' ' + paciente.apellido}}">Ver
+          <td md-cell ng-click="editarCampo($event, paciente, 'identificador')"
+              ng-class="{'md-placeholder': !paciente.id}"><span class="dato">{{paciente.id || 'Añadir identificador'}}</span>
+          </td>
+          <td md-cell ng-click="editarFecha($event, paciente)" ng-class="{'md-placeholder': !paciente.fechaNacimiento}" ng-show="exists('Fecha nacimiento', seleccionado)">
+            <span class="dato">{{paciente.fechaNacimiento.value
+              || "Añadir fecha nacimiento"}}</span>
+          </td>
+          <td md-cell ng-show="exists('Edad', seleccionado)">
+            <span class="dato"> {{paciente.edad}}</span>
+          </td>
+          <td md-cell ng-show="exists('Sexo', seleccionado)">
+            <md-select ng-model="paciente.sexo" name="sexo" ng-change="editarSexo(paciente)" placeholder="Sexo" class="dato" required>
+              <md-option value="Hombre"><span class="dato">Hombre</span></md-option>
+              <md-option value="Mujer"><span class="dato">Mujer</span></md-option>
+              <md-option value="Otro"><span class="dato">Otro</span></md-option>
+            </md-select>
+          </td>
+          <td md-cell ng-click="editarCampo($event, paciente, 'altura')"
+              ng-class="{'md-placeholder': !paciente.altura}" ng-show="exists('Altura', seleccionado)"> <span class="dato"> {{paciente.altura || 'Añadir altura'}} </span>
+          </td>
+
+          <td md-cell ng-click="editarPeso($event, paciente)" ng-class="{'md-placeholder': !paciente.peso}" ng-show="exists('Peso', seleccionado)">
+            <span class="dato"> {{paciente.peso || 'Añadir peso'}} </span>
+          </td>
+
+          <td md-cell ng-click="editarInicioEnfermedad($event, paciente)" ng-class="{'md-placeholder': !paciente.inicioEnfermedad}" ng-show="exists('Inicio enfermedad', seleccionado)">
+            <span class="dato"> {{paciente.inicioEnfermedad || "Añadir año"}} </span>
+          </td>
+
+          <td md-cell style="text-align: center;" ng-show="exists('Clasificación', seleccionado)">
+            <md-select ng-model="paciente.clasificacion" name="clasificacion" ng-change="editarClasificacion(paciente)" placeholder="Clasificación" class="dato" required>
+              <md-option value="1"><span class="dato">1</span></md-option>
+              <md-option value="2"><span class="dato">2</span></md-option>
+              <md-option value="3"><span class="dato">3</span></md-option>
+            </md-select>
+          </td>
+          <td md-cell ng-show="exists('Grabaciones', seleccionado)">
+            <md-button ng-click="redirect('grabaciones/' + paciente.id)"
+                       style="background: lightgrey;" ng-show="paciente.grabaciones">
+              <md-tooltip>Ver grabaciones de {{paciente.id}}</md-tooltip>
+              Ver
             </md-button>
           </td>
-          <td md-cell>
+          <td md-cell ng-show="exists('Atributos extra', seleccionado)">
             <md-button ng-click="verAtributosExtra($event,paciente)" ng-show="paciente.extra"
-                       style="background: lightgrey;"
-                       title="Ver información extra de {{paciente.nombre + ' ' + paciente.apellido}}">Ver
+                       style="background: lightgrey;">
+              <md-tooltip>Ver información extra de {{paciente.id}}</md-tooltip>
+              Ver
+            </md-button>
+            <md-button ng-click="verAtributosExtra($event,paciente)" ng-hide="paciente.extra"
+                       style="background: lightgrey;">
+              <md-tooltip>Añadir atributos extra a  {{paciente.id}}</md-tooltip>
+              Añadir
             </md-button>
           </td>
         </tr>
         </tbody>
       </table>
     </md-table-container>
-    <md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="query.limit"
+    <md-table-pagination class="pieTabla" md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="query.limit"
                          md-limit-options="limitOptions" md-page="query.page" md-total="{{pacientes.count}}"
                          md-page-select="options.pageSelect" md-boundary-links="options.boundaryLinks"
                          md-on-paginate="cargarPacientes"></md-table-pagination>
@@ -95,7 +160,7 @@
           </div>
         </md-toolbar>
 
-        <md-dialog-content style="max-width:800px;max-height:810px; width: auto; height: auto;">
+        <md-dialog-content style="max-width:80%; max-height:80%; min-width: 430px; min-height: 400px;">
           <div class="md-dialog-content">
 
             <div layout="row">
@@ -103,37 +168,37 @@
                          title="Añadir campo extra">
                 <md-icon md-svg-src="img/icons/add.svg"></md-icon>
               </md-button>
-              <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 1"
+              <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 0"
                          ng-click="quitarCampo()" title="Eliminar último campo extra creado">
                 <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
               </md-button>
             </div>
 
             <div layout="row">
-              <md-input-container flex="50">
-                <label>Nombre</label>
+              <md-input-container flex="100">
+                <label>Identificador</label>
                 <input required name="nombre" ng-model="paciente.nombre" autocomplete='given-name' md-autofocus>
                 <div ng-messages="formPaciente.nombre.$error" ng-show="formPaciente.nombre.$touched">
                   <div ng-message="required">Nombre requerido</div>
                 </div>
               </md-input-container>
-
               <md-input-container flex="50">
-                <label>Apellido</label>
-                <input required name="apellido" ng-model="paciente.apellido" autocomplete='family-name'>
-                <div ng-messages="formPaciente.apellido.$error" ng-show="formPaciente.apellido.$touched">
-                  <div ng-message="required">Campo requerido.</div>
+                <label>F. nacimiento</label>
+                <md-datepicker name="fecha" required ng-model="paciente.fecha" md-current-view="year"
+                               autocomplete='bday'></md-datepicker>
+                <div ng-messages="formPaciente.fecha.$error" ng-show="formPaciente.fecha.$touched">
+                  <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
                 </div>
               </md-input-container>
             </div>
 
             <div layout="row">
               <md-input-container flex="50">
-                <label>F. nacimiento</label>
-                <md-datepicker name="fecha" required ng-model="paciente.fecha" md-current-view="year"
-                               md-hide-icons="calendar" autocomplete='bday'></md-datepicker>
-                <div ng-messages="formPaciente.fecha.$error" ng-show="formPaciente.fecha.$touched">
-                  <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+                <label>Peso</label>
+                <input name="peso" ng-model="paciente.peso" type="number" min="0" max="225" step="1">
+                <div ng-messages="formPaciente.peso.$error" ng-show="formPaciente.peso.$touched">
+                  <div ng-message="max">Your field is too long</div>
+                  <div ng-message="min">Your field is too long</div>
                 </div>
               </md-input-container>
 
@@ -143,6 +208,30 @@
                 <div ng-messages="formPaciente.altura.$error" ng-show="formPaciente.altura.$touched">
                   <div ng-message="max">Your field is too long</div>
                   <div ng-message="min">Your field is too long</div>
+                </div>
+              </md-input-container>
+            </div>
+
+            <div layout="row">
+              <md-input-container flex="50">
+                <label>Año inicio enfermedad</label>
+                <input name="inicioEnfermedad" ng-model="paciente.inicioEnfermedad" type="number" step="1" required>
+                <div ng-messages="formPaciente.inicioEnfermedad.$error" ng-show="formPaciente.inicioEnfermedad.$touched">
+                  <div ng-message="required">Campo requerido.</div>
+                  <div ng-message="max">Your field is too long</div>
+                  <div ng-message="min">Your field is too long</div>
+                </div>
+              </md-input-container>
+
+              <md-input-container class="md-block" flex="50">
+                <label>Clasificación</label>
+                <md-select ng-model="paciente.clasificacion" name="clasificacion" required>
+                  <md-option value="1">1</md-option>
+                  <md-option value="2">2</md-option>
+                  <md-option value="3">3</md-option>
+                </md-select>
+                <div ng-messages="formPaciente.sexo.$error" ng-show="formPaciente.sexo.$touched">
+                  <div ng-message="required">Campo requerido.</div>
                 </div>
               </md-input-container>
             </div>
@@ -163,7 +252,7 @@
               <md-input-container flex="50">
                 <label>Grabación</label>
                 <md-select name="grabacion" ng-model="paciente.grabacion" md-on-close="limpiarBuscador()"
-                           md-on-open="cargarGrabaciones()" class="selectGrabacion">
+                           md-on-open="cargarGrabaciones()" class="selectGrabacion" ng-class="{'md-select-fixed-width':true}">
                   <md-select-header class="selectdemoSelectHeader">
                     <input ng-model="searchTerm" type="search" placeholder="Buscar una grabación..."
                            onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
@@ -176,14 +265,45 @@
               </md-input-container>
             </div>
 
-            <div layout="column" id="camposExtra">
-
+            <div ng-repeat="atributo in numeroAtributos" style="max-height: 95px;" layout="row" flex="100"
+                 layout-align="center center">
+              <md-input-container flex="50">
+                <md-autocomplete required="required" md-no-cache="noCache"
+                                 md-input-name="atributoExtraNombre{{atributo}}" md-input-id="searchinputMdAutocomplete"
+                                 md-selected-item="selectedItem[$index]"
+                                 md-search-text-change="searchTextChange(searchText[$index])"
+                                 md-search-text="searchText[$index]" md-selected-item-change="selectedItemChange(item)"
+                                 md-items="item in querySearch(searchText[$index])" md-item-text="item.display"
+                                 md-min-length="0" md-floating-label="Atributo extra {{$index + 1 }}">
+                  <md-item-template>
+                    <span md-highlight-text="searchText[$index]" md-highlight-flags="^i">{{item.display}}</span>
+                  </md-item-template>
+                  <md-not-found ng-hide="extraCreado">
+                    <md-button ng-hide="extraCreado" ng-click="crearCampoExtra(atributo)"
+                               style="width: 100%; text-align: center;">Crear!
+                    </md-button>
+                  </md-not-found>
+                  <div ng-messages="formPaciente['atributoExtraNombre' +atributo].$error"
+                       ng-if="formPaciente['atributoExtraNombre' +atributo].$touched">
+                    <div ng-message="required">Campo requerido</div>
+                  </div>
+                </md-autocomplete>
+              </md-input-container>
+              <md-input-container flex="50">
+                <label>Valor atributo extra {{$index + 1}}</label>
+                <input name="atributosExtraValor{{$index}}" ng-model="atributosExtraValor[$index]" required>
+                <div ng-messages="formPaciente['atributosExtraValor'+$index].$error"
+                     ng-show="formPaciente['atributosExtraValor'+$index].$touched">
+                  <div ng-message="required">Campo requerido</div>
+                </div>
+              </md-input-container>
             </div>
 
-            <div style="text-align: center;">
-              <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid">Crear paciente
-              </md-button>
-            </div>
+          </div>
+
+          <div style="text-align: center;">
+            <md-button type="submit" class="md-raised md-primary" ng-disabled="formPaciente.$invalid">Crear paciente
+            </md-button>
           </div>
         </md-dialog-content>
       </form>

@@ -1,4 +1,4 @@
-let app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute', 'material.svgAssetsCache', 'md.data.table' ]);
+let app = angular.module('MyApp', ['ngMaterial', 'ngMessages', 'ngRoute', 'material.svgAssetsCache', 'md.data.table', 'ngAnimate']);
 
 // Configuración de las rutas
 app.config(function($routeProvider) {
@@ -6,11 +6,11 @@ app.config(function($routeProvider) {
   $routeProvider
     .when('/', {
       templateUrl	: 'views/home.html',
-      controller 	: 'mainController'
+      controller 	: 'mainController',
     })
     .when('/login', {
       templateUrl : 'login-template.html',
-      controller 	: 'LoginController'
+      controller 	: 'LoginController',
     })
     .when('/importar', {
       templateUrl : 'views/importarDatos.html',

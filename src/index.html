@@ -6,7 +6,7 @@
   <!-- Angular Material style sheet -->
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.9/angular-material.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
-  <link rel="stylesheet" href="https://rawgit.com/daniel-nagy/md-data-table/master/dist/md-data-table.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material-data-table/0.10.10/md-data-table.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -18,7 +18,7 @@
       <md-button class="md-icon-button" ng-click="toggleLeft()">
         <md-icon md-svg-icon="img/icons/menu.svg"></md-icon>
       </md-button>
-      <h2 flex md-truncate>Prueba de diseño</h2>
+      <h2 flex md-truncate>TFG</h2>
       <span>
           <md-button ng-show="sesionIniciada && sesionIniciada !== null" class="md-accent md-raised"
                      ng-click="cerrarSesion()">
@@ -33,7 +33,7 @@
 
   </md-toolbar>
 
-  <div class="container" flex>
+  <div class="container" flex  style="max-height: 100%;" id="contenido">
     <md-sidenav class="md-sidenav-left" md-component-id="left" md-whiteframe="4">
       <md-toolbar class="md-theme-indigo">
         <h1 class="md-toolbar-tools">Menú</h1>
@@ -51,8 +51,8 @@
         </md-list>
       </md-content>
     </md-sidenav>
-    <md-content flex layout-align="center center" style="padding-top: 10%; width: 100%;">
-      <div ng-view layout-align="center center" style="width: 100%;" flex></div>
+    <md-content flex>
+      <div ng-view layout-align="center center" style="width: 100%; padding-top: 3%;"></div>
     </md-content>
 
     <script type="text/ng-template" id="login-dialog.template.html">
@@ -69,11 +69,11 @@
           </md-toolbar>
 
           <md-dialog-content>
-            <div class="md-dialog-content" style="width: 400px; max-width: 80%; height: 150px; max-height: 50%;">
+            <div class="md-dialog-content" style="min-width: 350px; max-width: 80%; max-height: 60%;">
               <md-input-container class="md-block">
                 <label>Usuario</label>
                 <input name="username" ng-model="username" type="email" md-autofocus required title="username"
-                       autocomplete="username"/>
+                       autocomplete="email"/>
                 <div ng-messages="loginForm.username.$error" ng-show="loginForm.username.$touched">
                   <div ng-message="required">El usuario es obligatorio</div>
                   <div ng-message="email">Introduce una dirección de correo válida</div>
@@ -88,14 +88,23 @@
                   <div ng-message="minlength">La contraseña debe tener al menos 6 caracteres</div>
                 </div>
               </md-input-container>
+              <md-input-container class="md-block">
+                <label>Clave de cifrado</label>
+                <input type="password" name="clave" ng-model="clave" minlength="6" required title="clave"
+                       autocomplete="current-password"/>
+                <div ng-messages="loginForm.clave.$error" ng-show="loginForm.clave.$touched">
+                  <div ng-message="required">La clave es obligatoria</div>
+                  <div ng-message="minlength">La clave debe tener al menos 6 caracteres</div>
+                </div>
+              </md-input-container>
               <div id="error-submit" style="color:red"></div>
             </div>
           </md-dialog-content>
 
           <md-dialog-actions layout="row">
-            <a href="" class="md-primary">Forgot Password?</a>
+            <a ng-click="restaurarPassword($event)" class="md-primary" id="restaurarPassword">Has olvidado la contraseña?</a>
             <span flex></span>
-            <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Login</md-button>
+            <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Iniciar Sesión</md-button>
           </md-dialog-actions>
         </form>
       </md-dialog>
@@ -133,17 +142,23 @@
 <script src="js/controllers/BorrarGrabacionController.js"></script>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.0.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-messaging.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-functions.js"></script>
 
 <!--Extra libraries-->
-<script src="js/papaparse.js"></script>
-<script src="js/moment.js"></script>
-<script src="js/md-data-table.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/md5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+<!--<script src="js/lib-typedarrays.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.4.0/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material-data-table/0.10.10/md-data-table.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/default-passive-events"></script>
 
 <script>
   // Initialize Firebase
@@ -156,6 +171,8 @@
     messagingSenderId: "777424997909"
   };
   firebase.initializeApp(config);
+  // firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION); // el estado solo persistirá en la sesión o pestaña actual y se desactivará cuando se cierre la pestaña o ventana
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 </script>
 </body>
 </html>
