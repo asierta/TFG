@@ -32,7 +32,6 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
       "id": CryptoJS.AES.encrypt($scope.paciente.nombre, getCookie('clave')).toString(),
       "fechaNacimiento": CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString(),
       "sexo": CryptoJS.AES.encrypt($scope.paciente.sexo, getCookie('clave')).toString(),
-      "grupo": CryptoJS.AES.encrypt(getCookie('grupo'), getCookie('clave')).toString(),
       "inicioEnfermedad": CryptoJS.AES.encrypt($scope.paciente.inicioEnfermedad.toString(), getCookie('clave')).toString(),
       "clasificacion":  CryptoJS.AES.encrypt($scope.paciente.clasificacion, getCookie('clave')).toString()
     };

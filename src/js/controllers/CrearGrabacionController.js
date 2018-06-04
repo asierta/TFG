@@ -28,8 +28,7 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
     let atributosObligatorios = {
       "id": CryptoJS.AES.encrypt($scope.grabacion.id, getCookie('clave')).toString(),
       "lugar": CryptoJS.AES.encrypt($scope.grabacion.lugar, getCookie('clave')).toString(),
-      "fechaGrabacion": CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString(),
-      "grupo": CryptoJS.AES.encrypt(getCookie('grupo'), getCookie('clave')).toString(),
+      "fechaGrabacion": CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString()
     };
 
     for (let i = 0; i < $scope.nCampoExtra; i++) {
@@ -64,15 +63,12 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
       let fechaNacimientoPartida = $scope.grabacion.paciente.fechaNacimiento.split("/");
       let fechaNacimiento = new Date(fechaNacimientoPartida[2], fechaNacimientoPartida[1] - 1, fechaNacimientoPartida[0]);
 
-      // let fechaGrabacionPartida = $scope.grabacion.fecha.value.split("/");
-      // let fechaGrabacion = new Date(fechaGrabacionPartida[2], fechaGrabacionPartida[1] - 1, fechaGrabacionPartida[0]);
-
       atributosObligatorios['pacienteKey'] = CryptoJS.AES.encrypt($scope.grabacion.paciente.key, getCookie('clave')).toString();
       atributosObligatorios['paciente'] = CryptoJS.AES.encrypt($scope.grabacion.paciente.id, getCookie('clave')).toString();
       atributosObligatorios['edadPaciente'] = CryptoJS.AES.encrypt(calcularEdad(fechaNacimiento).toString(), getCookie('clave')).toString();
-       atributosObligatorios['edadGrabacion'] = CryptoJS.AES.encrypt(calcularEdadEnFecha(fechaNacimiento, $scope.grabacion.fecha).toString(), getCookie('clave')).toString();
+      atributosObligatorios['edadGrabacion'] = CryptoJS.AES.encrypt(calcularEdadEnFecha(fechaNacimiento, $scope.grabacion.fecha).toString(), getCookie('clave')).toString();
 
-      firebase.database().ref('pacientes/').child($scope.grabacion.paciente.key).child('grabaciones').child(newStoreRef.key).set(true);
+      firebase.database().ref('pacientes/').child(getCookie('grupo')).child($scope.grabacion.paciente.key).child('grabaciones').child(newStoreRef.key).set(true);
     } else {
       atributosObligatorios['pacienteKey'] = '';
       atributosObligatorios['paciente'] = '';
@@ -161,7 +157,6 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
     $scope.promise = pacientesRef.once('value', function (paciente) {
       paciente.forEach(function (pacienteHijo) {
         let childData = pacienteHijo.val();
-        if (CryptoJS.AES.decrypt(childData['grupo'], getCookie('clave')).toString(CryptoJS.enc.Utf8) === getCookie('grupo')) {
           for (let clave in childData) {
             if (childData.hasOwnProperty(clave) && clave !== 'extra') {
               childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
@@ -173,7 +168,6 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
           }
           childData['key'] = pacienteHijo.key;
           pacientes.push(childData);
-        }
       });
       return pacientes;
     });
@@ -348,8 +342,8 @@ function apsUploadFile() {
   return {
     restrict: 'E',
     // language=HTML
-    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input required="" name="fileName" id="textInput" ng-model="fileName" type="text" placeholder="CSV no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>' +
-    '<input id="videoFileInput" type="file" class="ng-hide" ng-model="videoFiles"> <md-button id="uploadVideoButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input name="videoFileName" id="videoTextInput" ng-model="videoFileName" type="text" placeholder="Video no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.videoFileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>',
+    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files" accept=".csv"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input required="" name="fileName" id="textInput" ng-model="fileName" type="text" placeholder="CSV no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>' +
+    '<input id="videoFileInput" type="file" class="ng-hide" ng-model="videoFiles" accept=".mp4, .mkv, .webm, .wmv"> <md-button id="uploadVideoButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float><input name="videoFileName" id="videoTextInput" ng-model="videoFileName" type="text" placeholder="Video no seleccionado" ng-readonly="true"> <div ng-messages="formGrabacion.videoFileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>',
     link: apsUploadFileLink
   };
 }

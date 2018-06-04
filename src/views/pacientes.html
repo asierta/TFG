@@ -1,6 +1,6 @@
 <md-content ng-hide="!user" layout="column" flex>
   <div ng-hide="!configuracion" id="configuracion" class="check-element animate-show-hide">
-    <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px; height: 100%;">
+    <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px;">
       <legend class="demo-legend" style="color: #3F51B5;"><b>Configuración</b></legend>
       <div layout="row" layout-wrap="" flex="" layout-align="center">
         <md-checkbox aria-label="Select All" ng-checked="isChecked()" md-indeterminate="isIndeterminate()" ng-click="toggleAll()">
@@ -65,7 +65,7 @@
 
     <md-table-container>
       <table md-table md-row-select="options.rowSelection" multiple="{{options.multiSelect}}" ng-model="selected"
-             md-progress="promise" style="width: auto;">
+             md-progress="promise">
         <thead md-head md-order="query.order">
         <tr md-row >
           <th md-column md-order-by="id" ><span class="cabecera">Identificador</span></th>

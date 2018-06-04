@@ -1,4 +1,4 @@
-app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout', '$mdDialog', '$location', '$mdToast', '$rootScope',  function ($mdEditDialog, $q, $scope, $timeout, $mdDialog, $location, $mdToast, $rootScope) {
+app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout', '$mdDialog', '$location', '$mdToast', '$rootScope', function ($mdEditDialog, $q, $scope, $timeout, $mdDialog, $location, $mdToast, $rootScope) {
   'use strict';
 
   // Gestión sesión usuarios
@@ -42,7 +42,6 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
   $scope.fechaTimestamp = function () {
     let fecha = grabacion.fechaGrabacion.split("/");
     let time = new Date(fecha[2] + "-" + fecha[1] + "-" + fecha[0]).getTime();
-    console.log(time);
   };
 
   $scope.tabla = ['Fecha nacimiento', 'Edad', 'Sexo', 'Altura', 'Peso', 'Inicio enfermedad', 'Clasificación', 'Grabaciones', 'Atributos extra'];
@@ -61,16 +60,16 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
     return list.indexOf(item) > -1;
   };
 
-  $scope.isIndeterminate = function() {
+  $scope.isIndeterminate = function () {
     return ($scope.seleccionado.length !== 0 &&
       $scope.seleccionado.length !== $scope.tabla.length);
   };
 
-  $scope.isChecked = function() {
+  $scope.isChecked = function () {
     return $scope.seleccionado.length === $scope.tabla.length;
   };
 
-  $scope.toggleAll = function() {
+  $scope.toggleAll = function () {
     if ($scope.seleccionado.length === $scope.tabla.length) {
       $scope.seleccionado = [];
     } else if ($scope.seleccionado.length === 0 || $scope.seleccionado.length > 0) {
@@ -83,33 +82,42 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
     let pacientes = [];
     let database = firebase.database();
     let pacientesRef = database.ref('pacientes/' + getCookie('grupo'));
+    let error = false;
     $scope.promise = pacientesRef.once('value', function (paciente) {
       paciente.forEach(function (pacienteHijo) {
         let childData = pacienteHijo.val();
-        if (($scope.filter === '' || ((CryptoJS.AES.decrypt(childData['id'], getCookie('clave')).toString(CryptoJS.enc.Utf8)).toLowerCase().indexOf($scope.query.filter.toLowerCase()) > -1))) { //En caso de haber filtro solo se muestran los pacientes que lo cumplen
-          for (let clave in childData) {
-            if (childData.hasOwnProperty(clave) && clave === 'fechaNacimiento') {
-              let dateString = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-              let dateParts = dateString.split("/");
-              let dateObject = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-              childData['edad'] = calcularEdad(dateObject);
-              childData[clave] = {'value': dateString, 'ts': dateObject.getTime()};
-            } else if (clave === 'extra' || clave === 'grabaciones') {
-              for (let claveExtra in childData[clave]) {
-                childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-              }
-            } else {
-              if (clave === 'peso' || clave === 'altura' || clave === 'inicioEnfermedad'){
-                childData[clave] = Number(CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8));
-              }else{
-                childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+        try {
+          if (($scope.filter === '' || ((CryptoJS.AES.decrypt(childData['id'], getCookie('clave')).toString(CryptoJS.enc.Utf8)).toLowerCase().indexOf($scope.query.filter.toLowerCase()) > -1))) { //En caso de haber filtro solo se muestran los pacientes que lo cumplen
+            for (let clave in childData) {
+              if (childData.hasOwnProperty(clave) && clave === 'fechaNacimiento') {
+                let dateString = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                let dateParts = dateString.split("/");
+                let dateObject = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+                childData['edad'] = calcularEdad(dateObject);
+                childData[clave] = {'value': dateString, 'ts': dateObject.getTime()};
+              } else if (clave === 'extra' || clave === 'grabaciones') {
+                for (let claveExtra in childData[clave]) {
+                  childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                }
+              } else {
+                if (clave === 'peso' || clave === 'altura' || clave === 'inicioEnfermedad') {
+                  childData[clave] = Number(CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8));
+                } else {
+                  childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                }
               }
             }
+            childData['key'] = pacienteHijo.key;
+            pacientes.push(childData);
           }
-          childData['key'] = pacienteHijo.key;
-          pacientes.push(childData);
+        }
+        catch (err) {
+          error = true;
         }
       });
+      if (error){
+        showToast("La clave de encriptación introducida es incorrecta, inicie sesión de nuevo");
+      }
       pacientesMostrar['count'] = pacientes.length;
       pacientesMostrar['data'] = pacientes;
       return pacientesMostrar;
@@ -286,7 +294,6 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
 
       //Cambio de Item seleccionado
       function selectedItemChange(item) {
-        console.log(item);
       }
 
       //Carga inicial campos extra pacientes
@@ -356,7 +363,12 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
         if ($scope.selected[i].grabaciones !== undefined) {
           let grabaciones = Object.keys($scope.selected[i].grabaciones);
           for (let j = 0; j < grabaciones.length; j++) {
-            firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabaciones[j]).update({'paciente': '', 'pacienteKey': '', 'edadPaciente': '', 'edadGrabacion': ''})
+            firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabaciones[j]).update({
+              'paciente': '',
+              'pacienteKey': '',
+              'edadPaciente': '',
+              'edadGrabacion': ''
+            })
           }
         }
         pacientesRef.child($scope.selected[i].key).remove()
@@ -395,16 +407,12 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
   };
 
   $scope.logItem = function (item) {
-    console.log(item.nombre, 'was selected');
   };
 
   $scope.logOrder = function (order) {
-    console.log('orden: ', order);
   };
 
   $scope.logPagination = function (page, limit) {
-    console.log('página: ', page);
-    console.log('límite: ', limit);
   };
 
   $scope.removeFilter = function () {
@@ -439,7 +447,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
       save: function (input) {
         if (campo === 'identificador') {
           paciente.id = input.$modelValue;
-          let newId =  CryptoJS.AES.encrypt(paciente.id, getCookie('clave')).toString()
+          let newId = CryptoJS.AES.encrypt(paciente.id, getCookie('clave')).toString()
           firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).update({
             'id': newId
           });
@@ -451,12 +459,12 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
           }
 
         } else {
-          if (!isNaN(input.$modelValue)  && input.$modelValue !== null) {
+          if (!isNaN(input.$modelValue) && input.$modelValue !== null) {
             paciente.altura = input.$modelValue;
             firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).update({
               'altura': CryptoJS.AES.encrypt(paciente.altura.toString(), getCookie('clave')).toString()
             });
-          }else{
+          } else {
             delete paciente.altura;
             firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).child('altura').remove();
           }
@@ -495,20 +503,17 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
   };
 
   $scope.editarPeso = function (event, paciente) {
-    console.log(paciente);
     event.stopPropagation(); // in case autoselect is enabled
     let editDialog = {
       modelValue: Number(paciente.peso),
       placeholder: 'Peso',
       save: function (input) {
         if (!isNaN(input.$modelValue) && input.$modelValue !== null) {
-          console.log(input.$modelValue);
           paciente.peso = input.$modelValue;
           firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).update({
             'peso': CryptoJS.AES.encrypt(paciente.peso.toString(), getCookie('clave')).toString()
           });
-        }else{
-          console.log(input.$modelValue);
+        } else {
           firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).child('peso').remove();
           delete paciente.peso;
         }
@@ -520,11 +525,11 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
       type: 'number',
     };
 
-      editDialog['validators'] = {
-        'min': 0,
-        'max': 220,
-        'aria-label': "peso"
-      };
+    editDialog['validators'] = {
+      'min': 0,
+      'max': 220,
+      'aria-label': "peso"
+    };
 
     let promise;
     promise = $mdEditDialog.large(editDialog);
@@ -611,8 +616,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
         let fechaNacimientoPartida = paciente.fechaNacimiento.value.split("/");
         let fechaNacimiento = new Date(fechaNacimientoPartida[2], fechaNacimientoPartida[1] - 1, fechaNacimientoPartida[0]);
         for (let key in paciente.grabaciones) {
-          console.log(key);
-          firebase.database().ref('grabaciones/' + getCookie('grupo')).child(key).once('value', function (grabacion) {
+          firebase.database().ref('grabaciones/').child(getCookie('grupo')).child(key).once('value', function (grabacion) {
             let childData = grabacion.val();
             let fechaGrabacionPartida = CryptoJS.AES.decrypt(childData.fechaGrabacion, getCookie('clave')).toString(CryptoJS.enc.Utf8).split("/");
             let fechaGrabacion = new Date(fechaGrabacionPartida[2], fechaGrabacionPartida[1] - 1, fechaGrabacionPartida[0]);

@@ -26,16 +26,19 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
       fullscreen: useFullScreen
     })
       .then(function (credentials) {
-        $scope.sesionIniciada = true;
-          firebase.database().ref('gruposUsuarios/').once('value', function (grupo) {
-            grupo.forEach(function (grupoHijo) {
-              let childData = grupoHijo.val();
-              if (childData[credentials.username.replace(".", "-")] === true) {
-                console.log(credentials.clave);
-                document.cookie = "grupo=" + grupoHijo.key + ";";
-                document.cookie = "clave=" + credentials.clave + ";";
-              }
-            });
+          $scope.sesionIniciada = true;
+          let clave = CryptoJS.MD5(credentials.clave);
+          firebase.database().ref('gruposUsuarios/').child(credentials.grupo).once('value', function (grupoHijo) {
+            let childData = grupoHijo.val();
+            if (childData.clave === undefined) {
+              firebase.database().ref('gruposUsuarios/').child(grupoHijo.key).child('clave').set(CryptoJS.SHA256(credentials.clave).toString(CryptoJS.enc.Hex));
+            } else if (childData.clave !== CryptoJS.SHA256(credentials.clave).toString(CryptoJS.enc.Hex)) {
+              firebase.auth().signOut();
+              return showToast("Clave de cifrado incorrecta");
+            }
+            document.cookie = "grupo=" + credentials.grupo + ";";
+            document.cookie = "clave=" + clave + ";";
+
           });
           return showToast("Bienvenido " + credentials.username + ".");
         },
@@ -70,7 +73,7 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
     let ca = decodedCookie.split(';');
-    for(let i = 0; i <ca.length; i++) {
+    for (let i = 0; i < ca.length; i++) {
       let c = ca[i];
       while (c.charAt(0) === ' ') {
         c = c.substring(1);
@@ -147,11 +150,11 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
         $scope.email = '';
 
         $scope.restaurar = function () {
-          firebase.auth().sendPasswordResetEmail($scope.email).then(function() {
+          firebase.auth().sendPasswordResetEmail($scope.email).then(function () {
             // Email sent.
             showToast("Correo de restauración de contraseña enviado");
             $scope.close();
-          }).catch(function(error) {
+          }).catch(function (error) {
             // An error happened.
             showToast("Hubo un problema al enviar el correo de restauración");
           });
@@ -175,19 +178,38 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
       var username = this.username;
       var password = this.password;
       var clave = this.clave;
-      clave = CryptoJS.MD5(this.clave);
-      firebase.auth().signInWithEmailAndPassword(this.username, this.password).then(function () {
-        console.log("Sesión iniciada correctamente");
-        $mdDialog.hide({username: username, password: password, clave: clave.toString()});
-      }).catch(function (error) {
-        // Handle Errors here.
+      let usuarioExiste = false;
+      let grupo = "";
+      try {
+        firebase.database().ref('gruposUsuarios/').once('value', function (grupo) {
+          grupo.forEach(function (grupoHijo) {
+            let childData = grupoHijo.val();
+            if (childData[username.split(".").join("-")] === true) {
+              usuarioExiste = true;
+              grupo = grupoHijo.key;
+              if (childData.clave !== undefined && childData.clave !== CryptoJS.SHA256(clave).toString(CryptoJS.enc.Hex)) {
+                var element = angular.element(document.querySelector('#error-submit'));
+                element.text("Clave de cifrado incorrecta");
+              } else {
+                firebase.auth().signInWithEmailAndPassword(username, password).then(function () {
+                  $mdDialog.hide({username: username, password: password, clave: clave.toString(), grupo: grupo});
+                });
+              }
+            }
+          });
+          if (!usuarioExiste) {
+            var element = angular.element(document.querySelector('#error-submit'));
+            element.text("El usuario introducido no existe");
+          }
+        });
+      } catch (error) {
         var errorCode = error.code;
         var errorMessage = error.message;
-        console.log(errorCode + errorMessage);
         var element = angular.element(document.querySelector('#error-submit'));
         element.text(errorMessage);
         showToast(errorMessage);
-      });
+      }
+
 
     };
   }

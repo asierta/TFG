@@ -12,33 +12,13 @@ app.config(function($routeProvider) {
       templateUrl : 'login-template.html',
       controller 	: 'LoginController',
     })
-    .when('/importar', {
-      templateUrl : 'views/importarDatos.html',
-      controller 	: 'importarDatosController'
-    })
     .when('/pacientes', {
       templateUrl : 'views/pacientes.html',
       controller 	: 'PacienteController'
     })
-    .when('/crearPaciente', {
-      templateUrl : 'views/crearPaciente.html',
-      controller 	: 'CrearPacienteController'
-    })
-    .when('/borrarPaciente', {
-      templateUrl : 'views/borrarPaciente.html',
-      controller 	: 'BorrarPacienteController'
-    })
     .when('/grabaciones/:paciente', {
       templateUrl : 'views/grabaciones.html',
       controller 	: 'GrabacionController'
-    })
-    .when('/crearGrabacion', {
-      templateUrl : 'views/crearGrabacion.html',
-      controller 	: 'CrearGrabacionController'
-    })
-    .when('/borrarGrabacion', {
-      templateUrl : 'views/borrarGrabacion.html',
-      controller 	: 'BorrarGrabacionController'
     })
     .otherwise({
       redirectTo: '/'

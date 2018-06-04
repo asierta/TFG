@@ -2,6 +2,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   'use strict';
   $scope.user = false;
   $scope.configuracion = true;
+  $scope.editaCSV = false;
+  $scope.editaVideo = false;
+  $scope.formatos = "";
   firebase.auth().onAuthStateChanged(function (user) {
     if (!user) {
       $mdToast.show($mdToast.simple()
@@ -78,10 +81,12 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     let grabaciones = [];
     let database = firebase.database();
     let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
+    let error = false;
 
     $scope.promise = grabacionesRef.once('value', function (grabacion) {
       grabacion.forEach(function (grabacionHija) {
         let childData = grabacionHija.val();
+        try{
         if (($scope.filter === '' || (childData[$scope.query.filterRow] !== undefined && CryptoJS.AES.decrypt(childData[$scope.query.filterRow], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($scope.query.filter.toLowerCase()) > -1))) { //En caso de haber filtro solo se muestran las grabaciones que lo cumplen
           if (($routeParams.paciente !== 'all' && (CryptoJS.AES.decrypt(childData['paciente'], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($routeParams.paciente.toLowerCase()) > -1)) || $routeParams.paciente === 'all') {
             for (let clave in childData) {
@@ -119,7 +124,15 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           }
 
         }
+        }
+        catch (err) {
+          console.log(err);
+          error = true;
+        }
       });
+      if (error){
+        showToast("La clave de encriptación introducida es incorrecta, inicie sesión de nuevo");
+      }
       grabacionesMostrar['count'] = grabaciones.length;
       grabacionesMostrar['data'] = grabaciones;
       return grabacionesMostrar;
@@ -132,7 +145,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     let pacientes = [];
     let database = firebase.database();
     let pacientesRef = database.ref('pacientes/' + getCookie('grupo'));
-    let grupoUsuario = getCookie('grupo');
     $scope.promise = pacientesRef.once('value', function (paciente) {
       paciente.forEach(function (pacienteHijo) {
         let childData = pacienteHijo.val();
@@ -189,20 +201,13 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       let database = firebase.database();
       let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
       for (let i = 0; i < $scope.selected.length; i++) {//Borramos todas las grabaciones seleccionadas
-        firebase.storage().ref('grabacionesJSON/' + $scope.selected[i].grabacion.split(".")[0] + ".json").delete();
-        firebase.storage().ref('grabaciones/' + $scope.selected[i].grabacion).delete();
+        firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" +$scope.selected[i].grabacion.split(".")[0] + ".json").delete();
+        firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + $scope.selected[i].grabacion).delete();
         if ($scope.selected[i].video !== undefined) {
-          console.log($scope.selected[i]);
-          console.log("hay video" + $scope.selected[i].video);
-          firebase.storage().ref('videos/' + $scope.selected[i].video).delete();
-        }else{
-          console.log("nohayvideo")
+          firebase.storage().ref('videos/' + getCookie('grupo') + "/" + $scope.selected[i].video).delete();
         }
-        console.log($scope.selected[i].grabacion.paciente);
-        if ($scope.selected[i].grabacion.paciente !== undefined) {
-          console.log($scope.selected);
-          console.log($scope.selected[i]);
-          firebase.database().ref('pacientes/' + getCookie('grupo')).child($scope.selected[i].pacienteKey).child('grabaciones').child($scope.selected[i].key).remove();
+        if ($scope.selected[i].paciente !== undefined) {
+          firebase.database().ref('pacientes').child(getCookie('grupo')).child($scope.selected[i].pacienteKey).child('grabaciones').child($scope.selected[i].key).remove();
         }
         grabacionesRef.child($scope.selected[i].key).remove()
           .catch(err => {
@@ -349,6 +354,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     });
 
     function editarCSVController($scope, $mdEditDialog, grabacion, $element) {
+      $scope.editaVideo = false;
+      $scope.editaCSV = true;
+      $scope.formatos = ".csv";
       $scope.guardar = function () {
        if ($scope.files[0]) {
          firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" + grabacion.grabacion.split(".")[0] + ".json").delete();
@@ -375,12 +383,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
     function almacenarFicheroGrabacion(file, id) {
       let storageRef = firebase.storage().ref('grabaciones/'+ getCookie('grupo') + "/" + id);
-      let metadata = {
-        contentType: 'text/csv',
-        name: file.name
-      };
-      // console.log(file);
-      // console.log(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
       let task = storageRef.putString(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
       task.on('state_changed', function progress(snapshot) {
       }, function error(err) {
@@ -448,9 +450,14 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     });
 
     function editarVideoController($scope, $mdEditDialog, grabacion, $element) {
+      $scope.editaVideo = true;
+      $scope.editaCSV = false;
+      $scope.formatos = "video/*";
       $scope.guardar = function () {
         if ($scope.files !== undefined && $scope.files[0]) {
-          firebase.storage().ref('videos/' + getCookie('grupo') + "/" + grabacion.video).delete();
+          if (grabacion.video !== undefined && grabacion.video !== ""){
+            firebase.storage().ref('videos/' + getCookie('grupo') + "/" + grabacion.video).delete();
+          }
           let videoFile = $scope.files[0];
           let videoFileId = videoFile.name.split(".")[0] + "-" + guid() + "." + videoFile.name.split(".")[1];
           firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({'video': videoFileId});
@@ -513,7 +520,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
         showToast("Grabación actualizada");
       });
     } else if ((paciente.id) !== grabacion.paciente) {
-      console.log(grabacion);
       let fechaNacimientoPartida = paciente.fechaNacimiento.split("/");
       let fechaNacimiento = new Date(fechaNacimientoPartida[2], fechaNacimientoPartida[1] - 1, fechaNacimientoPartida[0]);
 
@@ -698,7 +704,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
       //Cambio de Item seleccionado
       function selectedItemChange(item) {
-        console.log(item);
       }
 
       //Carga inicial campos extra pacientes
@@ -934,7 +939,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       };
 
       $scope.editarTexto = function (event, nota) {
-        console.log(nota);
         event.stopPropagation(); // in case autoselect is enabled
         let editDialog = {
           modelValue: nota.texto,
@@ -1009,9 +1013,8 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '          </div>' +
       '</md-toolbar>' +
       '<md-dialog-content>' +
-      // '<div layout="row" layout-sm="column" layout-align="center center">'+
       '<md-progress-linear ng-disabled="!loading" ng-show="loading" md-mode="indeterminate"></md-progress-linear>' +
-      // '</div>'+
+      '<div ng-show="loading" style="text-align: center; padding-top: 5%; padding-bottom: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>'+
       '<table class="prevCSVs">' +
       '<tr>' +
       '<th ng-repeat="c in fields">{{ c }}</th>' +
@@ -1034,6 +1037,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     function CSVController($scope, $mdDialog, grabacion) {
       $scope.grabacion = grabacion;
       $scope.loading = true;
+      $scope.textoCarga = "Cargando " + grabacion.split("-")[0] + "." + grabacion.split(".")[1];
       $scope.getNumber = function (num) {
         let arrayDeNumeros = new Array(num);
         for (let i = 0; i < num; i++) {//Para iterar por cada una de las columnas del csv
@@ -1048,6 +1052,8 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           .then(res => res.blob()) // Gets the response and returns it as a blob
           .then(blob => {
             var reader = new FileReader();
+            $scope.textoCarga = "Desencriptando " + grabacion.split("-")[0] + "." + grabacion.split(".")[1];
+            $scope.$apply();
             reader.onload = function () {
               Papa.parse(CryptoJS.AES.decrypt(reader.result, getCookie('clave')).toString(CryptoJS.enc.Utf8), {
                 complete: function (results) {
@@ -1074,7 +1080,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       parent: angular.element(document.body),
       clickOutsideToClose: true,
       template:
-      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; min-width: 50%; min-height: 50%;">' +
+      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; max-width: 90%; min-width: 50%; min-height: 50%;">' +
       ' <md-toolbar>' +
       '          <div class="md-toolbar-tools">' +
       '            <h2>Visualizar esqueleto</h2>' +
@@ -1085,6 +1091,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '          </div>' +
       '        </md-toolbar>' +
       '<md-progress-linear ng-disabled="!loading" ng-show="loading" md-mode="indeterminate"></md-progress-linear>' +
+      '<div ng-show="loading" style="text-align: center; padding-top: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>'+
       '<md-dialog-content ng-hide="loading">' +
 
       '<div flex-gt-sm="50" style="margin-left: 10px; margin-top: 10px;">' +
@@ -1093,7 +1100,10 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       'Video' +
       '</md-checkbox>' +
       '<md-checkbox ng-model="visualizarEsqueleto" aria-label="visualizarEsqueleto">' +
-      'Esqueleto' +
+      'Esqueleto Frontal' +
+      '</md-checkbox>' +
+      '<md-checkbox ng-model="visualizarEsqueletoLateral" aria-label="visualizarEsqueletoFrontal">' +
+      'Esqueleto Lateral' +
       '</md-checkbox>' +
       '</div>' +
       ' <p style="margin-left: 10px; margin-top: 10px; font-size: 100%;"> Pulse en cualquier punto del esqueleto para añadir una nota.</p>' +
@@ -1104,6 +1114,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '</div>' +
       '<div flex="35" layout-align="center center" id="canvas-container" style="margin-right: 10px; margin-bottom: 10px;" ng-show="visualizarEsqueleto">' +
       '<canvas id="canvas" width="400" height="600" style="border:1px solid #d3d3d3; background-color: #f2f2f2;" title="Haz click en cualquier punto para añadir una nota"></canvas>' +
+      '</div>' +
+      '<div flex="35" layout-align="center center" id="canvas-container" style="margin-right: 10px; margin-bottom: 10px;" ng-show="visualizarEsqueletoLateral">' +
+      '<canvas id="canvasLateral" width="400" height="600" style="border:1px solid #d3d3d3; background-color: #f2f2f2;" title="Haz click en cualquier punto para añadir una nota"></canvas>' +
       '</div>' +
       '</div>' +
       '<div layout="row" layout-align="center center" style="margin-bottom: 10px;">' +
@@ -1152,11 +1165,13 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       $scope.grabacion = grabacion.grabacion;
       $scope.loading = true;
       $scope.visualizarEsqueleto = true;
+      $scope.visualizarEsqueletoLateral = true;
       $scope.visualizarVideo = true;
       $scope.hayVideo = (grabacion.video !== undefined);
       $scope.tiempoActual = 0.0;
       $scope.duracion = 0;
       $scope.loading = true;
+      $scope.textoCarga = "Cargando Video";
 
       let myTimer, data;
       let i;
@@ -1174,7 +1189,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       if ($scope.hayVideo) {
         $timeout(function () {
           let canvas = $document[0].getElementById("canvas");
+          let canvasLateral = $document[0].getElementById("canvasLateral");
           let ctx = canvas.getContext('2d');
+          let ctxLateral = canvasLateral.getContext('2d');
           let video = $document[0].getElementById("videoEsqueleto");
           video.controls = false;
 
@@ -1241,9 +1258,20 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
             if (seekTo > video.duration) {
               video.currentTime = seekTo;
+              let oldJ = j;
               j = closest(seekTo * 1000, tiemposEsqueleto);
+              if ((j > (oldJ + 35)) || (j < (oldJ - 35))) {
+                notaEnPantalla = [];
+                for (let obj in grabacion.notasVideo) {
+                  let t = closest(horasAMilisegundos(grabacion.notasVideo[obj].segundo), tiemposEsqueleto);
+                  if ((j >= t) && (j <= (t + 100))) {
+                    let nota = grabacion.notasVideo[obj];
+                    nota['fila'] = t + 100;
+                    notaEnPantalla.push(nota);
+                  }
+                }
+              }
             } else {
-              console.log("corto", seekTo);
               video.currentTime = seekTo;
               j = closest(seekTo * 1000, tiemposEsqueleto);
               video.play();
@@ -1340,9 +1368,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   }
                 }
               }
-              // if (oldJ >= data.data.length) {
-              //   myTimer = setInterval(pintarEsqueleto, 35);
-              // }
             }else{
               video.currentTime = video.duration;
             }
@@ -1359,6 +1384,19 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           });
 
           canvas.addEventListener("mouseout", function () {
+            $(this).css('cursor', 'auto');
+          });
+          canvasLateral.addEventListener("click", function (evt) {
+            var mousePos = getMousePos(canvasLateral, evt);
+            // alert(mousePos.x + ',' + mousePos.y);
+            showPrompt(evt, mousePos);
+          }, false);
+
+          canvasLateral.addEventListener("mouseover", function () {
+            $(this).css('cursor', 'pointer');
+          });
+
+          canvasLateral.addEventListener("mouseout", function () {
             $(this).css('cursor', 'auto');
           });
 
@@ -1402,7 +1440,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                 }
                 notaEnPantalla.push(nota);
               }
-              console.log(video.duration, $scope.duracion);
               if ((video.duration < $scope.duracion && (video.currentTime < video.duration)) || (video.duration === $scope.duracion)) {
 
                 video.play();
@@ -1419,16 +1456,23 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           firebase.storage().ref('videos/' + getCookie('grupo')).child(grabacion.video).getDownloadURL().then(function (url) {
             var xhr = new XMLHttpRequest();
             // xhr.responseType = 'application/octet-stream';
+            $scope.textoCarga = "Desencriptando Video";
+            $scope.$apply();
             xhr.onload = function (event) {
               var videoEncriptado = xhr.response;
+              $scope.$apply();
               let videoDesencriptado = CryptoJS.AES.decrypt(videoEncriptado, getCookie('clave')).toString(CryptoJS.enc.Latin1);
               video.setAttribute('href', videoDesencriptado);
               addSourceToVideo(video, videoDesencriptado);
+              $scope.textoCarga = "Cargando Esqueleto";
+              $scope.$apply();
               pathReference.child($scope.grabacion).getDownloadURL().then(function (url) {
                 fetch(url)
                   .then(res => res.blob()) // Gets the response and returns it as a blob
                   .then(blob => {
                     var reader = new FileReader();
+                    $scope.textoCarga = "Desencriptando Esqueleto";
+                    $scope.$apply();
                     reader.onload = function () {
                       Papa.parse(CryptoJS.AES.decrypt(reader.result, getCookie('clave')).toString(CryptoJS.enc.Utf8), {
                         complete: function (text) {
@@ -1462,6 +1506,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           function pintarEsqueleto() {
             if (!pausa) {
               j++;
+              let x,y,z;
               if (video.duration < $scope.duracion && (video.currentTime === video.duration)) {
                 oeseekBar.value = (tiemposEsqueleto[j] / 1000) * (100 / $scope.duracion);
                 let curMins = Math.floor((tiemposEsqueleto[j] / 1000) / 60);
@@ -1497,17 +1542,23 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.beginPath();
+                ctxLateral.clearRect(0, 0, canvasLateral.width, canvasLateral.height);
+                ctxLateral.beginPath();
 
                 if (notaEnPantalla.length > 0) {
                   ctx.font = "22px Roboto";
                   ctx.fillStyle = "blue";
+                  ctxLateral.font = "22px Roboto";
+                  ctxLateral.fillStyle = "blue";
                   for (let n = 0; n < notaEnPantalla.length; n++) {
                     ctx.fillText(notaEnPantalla[n].texto, notaEnPantalla[n].x, notaEnPantalla[n].y);
+                    ctxLateral.fillText(notaEnPantalla[n].texto, notaEnPantalla[n].x, notaEnPantalla[n].y);
                     if (notaEnPantalla[n].fila <= j) {
                       notaEnPantalla.shift();
                     }
                   }
                   ctx.closePath();
+                  ctxLateral.closePath();
                 }
 
                 if (j === 1) {//Comenzar a reproducir el video al principio
@@ -1518,30 +1569,42 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   if (linea[i + 1] === "-" || linea[i + 1] === "-") {//Si no hay informacion sobre la posición
                     x = 0;
                     y = 0;
+                    z = 0;
                   } else {
                     x = parseFloat(linea[i + 1].replace(",", ".")) * 300;
                     y = parseFloat(linea[i + 2].replace(",", ".")) * 300;
+                    z = parseFloat(linea[i + 3].replace(",", ".")) * 300;
                     let joint = (i - 1) / 4;
                     for (let k = 0; k < hierarchy[joint].length; k++) {//Para cada una de las articulaciones hija
                       let jointHijo = hierarchy[joint][k];
                       let xHijo = parseFloat(linea[4 * jointHijo + 2].replace(",", ".")) * 300;
                       let yHijo = parseFloat(linea[4 * jointHijo + 3].replace(",", ".")) * 300;
+                      let zHijo = parseFloat(linea[4 * jointHijo + 4].replace(",", ".")) * 300;
                       ctx.moveTo((canvas.width / 2) - x, (canvas.height / 2) - y);
                       ctx.lineTo((canvas.width / 2) - xHijo, (canvas.height / 2) - yHijo);//Pintar lineas
                       ctx.stroke();
+                      ctxLateral.moveTo((canvasLateral.width / 2) - z, (canvasLateral.height / 2) - y);
+                      ctxLateral.lineTo((canvasLateral.width / 2) - zHijo, (canvasLateral.height / 2) - yHijo);//Pintar lineas
+                      ctxLateral.stroke();
                     }
                   }
 
                   if (linea[i] === "0") {//Si no es inferido pintar circulo verde
                     ctx.fillStyle = 'green';
+                    ctxLateral.fillStyle = 'green';
                   } else {
                     ctx.fillStyle = 'red';
+                    ctxLateral.fillStyle = 'red';
                   }
 
                   ctx.moveTo((canvas.width / 2) - x, (canvas.height / 2) - y);
                   ctx.arc((canvas.width / 2) - x, (canvas.height / 2) - y, 5, 0, 2 * Math.PI, false);//Pintar circulo
                   ctx.stroke();
                   ctx.fill();
+                  ctxLateral.moveTo((canvasLateral.width / 2) - z, (canvasLateral.height / 2) - y);
+                  ctxLateral.arc((canvas.width / 2) - z, (canvasLateral.height / 2) - y, 5, 0, 2 * Math.PI, false);//Pintar circulo
+                  ctxLateral.stroke();
+                  ctxLateral.fill();
                 }
               } else if (video.currentTime === video.duration) {
                 j = 0;
@@ -1593,8 +1656,11 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       } else {
         $timeout(function () {
           $scope.visualizarVideo = false;
+          $scope.textoCarga = "Cargando esqueleto";
           let canvas = $document[0].getElementById("canvas");
           let ctx = canvas.getContext('2d');
+          let canvasLateral = $document[0].getElementById("canvasLateral");
+          let ctxLateral = canvasLateral.getContext('2d');
 
           var oeplayPauseBtn = document.getElementById("play/pause");
           //current time holder
@@ -1657,6 +1723,18 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           });
 
           canvas.addEventListener("mouseout", function () {
+            $(this).css('cursor', 'auto');
+          });
+          canvasLateral.addEventListener("click", function (evt) {
+            var mousePos = getMousePos(canvasLateral, evt);
+            showPrompt(evt, mousePos);
+          }, false);
+
+          canvasLateral.addEventListener("mouseover", function () {
+            $(this).css('cursor', 'pointer');
+          });
+
+          canvasLateral.addEventListener("mouseout", function () {
             $(this).css('cursor', 'auto');
           });
 
@@ -1732,6 +1810,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           function pintarEsqueleto() {
             if (!pausa) {
               j++;
+              let x,y,z;
               oeseekBar.value = (tiemposEsqueleto[j] / 1000) * (100 / $scope.duracionEsqueleto);
 
               let curMins = Math.floor((tiemposEsqueleto[j] / 1000) / 60);
@@ -1766,47 +1845,65 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.beginPath();
+                ctxLateral.clearRect(0, 0, canvasLateral.width, canvasLateral.height);
+                ctxLateral.beginPath();
 
                 if (notaEnPantalla.length > 0) {
                   ctx.font = "22px Roboto";
                   ctx.fillStyle = "blue";
+                  ctxLateral.font = "22px Roboto";
+                  ctxLateral.fillStyle = "blue";
                   for (let n = 0; n < notaEnPantalla.length; n++) {
                     ctx.fillText(notaEnPantalla[n].texto, notaEnPantalla[n].x, notaEnPantalla[n].y);
+                    ctxLateral.fillText(notaEnPantalla[n].texto, notaEnPantalla[n].x, notaEnPantalla[n].y);
                     if (notaEnPantalla[n].fila <= j) {
                       notaEnPantalla.shift();
                     }
                   }
                   ctx.closePath();
+                  ctxLateral.closePath();
                 }
 
                 for (i = 1; i < (linea.length - 8); i = i + 4) {//Para cada uno de los joints
                   if (linea[i + 1] === "-" || linea[i + 1] === "-") {//Si no hay informacion sobre la posición
                     x = 0;
                     y = 0;
+                    z = 0;
                   } else {
                     x = parseFloat(linea[i + 1].replace(",", ".")) * 300;
                     y = parseFloat(linea[i + 2].replace(",", ".")) * 300;
+                    z = parseFloat(linea[i + 3].replace(",", ".")) * 300;
                     let joint = (i - 1) / 4;
                     for (let k = 0; k < hierarchy[joint].length; k++) {//Para cada una de las articulaciones hija
                       let jointHijo = hierarchy[joint][k];
                       let xHijo = parseFloat(linea[4 * jointHijo + 2].replace(",", ".")) * 300;
                       let yHijo = parseFloat(linea[4 * jointHijo + 3].replace(",", ".")) * 300;
+                      let zHijo = parseFloat(linea[4 * jointHijo + 4].replace(",", ".")) * 300;
                       ctx.moveTo((canvas.width / 2) - x, (canvas.height / 2) - y);
                       ctx.lineTo((canvas.width / 2) - xHijo, (canvas.height / 2) - yHijo);//Pintar lineas
                       ctx.stroke();
+                      ctxLateral.moveTo((canvasLateral.width / 2) - z, (canvasLateral.height / 2) - y);
+                      ctxLateral.lineTo((canvasLateral.width / 2) - zHijo, (canvasLateral.height / 2) - yHijo);//Pintar lineas
+                      ctxLateral.stroke();
                     }
                   }
 
                   if (linea[i] === "0") {//Si no es inferido pintar circulo verde
                     ctx.fillStyle = 'green';
+                    ctxLateral.fillStyle = 'green';
                   } else {
                     ctx.fillStyle = 'red';
+                    ctxLateral.fillStyle = 'red';
                   }
 
                   ctx.moveTo((canvas.width / 2) - x, (canvas.height / 2) - y);
                   ctx.arc((canvas.width / 2) - x, (canvas.height / 2) - y, 5, 0, 2 * Math.PI, false);//Pintar circulo
                   ctx.stroke();
                   ctx.fill();
+                  ctxLateral.moveTo((canvasLateral.width / 2) - z, (canvasLateral.height / 2) - y);
+                  ctxLateral.arc((canvasLateral.width / 2) - z, (canvasLateral.height / 2) - y, 5, 0, 2 * Math.PI, false);//Pintar circulo
+                  ctxLateral.stroke();
+                  ctxLateral.fill();
                 }
               } else {
                 j = 0;
@@ -1858,7 +1955,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
       $scope.close = function () {
         if (myTimer !== undefined) {
-          // clearInterval(myTimer);
+          clearInterval(myTimer);
         }
         if ($scope.hayVideo) {
           $document[0].getElementById("videoEsqueleto").pause();
@@ -2028,8 +2125,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 function apsEditFile() {
   var directive = {
     restrict: 'E',
-    template: '<input id="fileInput" type="file" class="ng-hide" ng-model="files" aria-label="CSV"> <md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float> <input required id="textInput" ng-model="fileName" name="fileName" type="text" placeholder="No file chosen" ng-readonly="true"><div ng-messages="formEditar.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container>',
-    link: apsEditFileLink
+    template: '<div><input id="fileInput" type="file" class="ng-hide" ng-model="files" aria-label="CSV" accept="{{formatos}}"><md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float> <input required id="textInput" ng-model="fileName" name="fileName" type="text" placeholder="No file chosen" ng-readonly="true"><div ng-messages="formEditar.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container></div>'
+    // '<div ng-show="editaVideo"><input id="fileInput" type="file" class="ng-hide" ng-model="files" aria-label="CSV" accept=".mp4, .mkv, .webm, .wmv"><md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float> <input required id="textInput" ng-model="fileName" name="fileName" type="text" placeholder="No file chosen" ng-readonly="true"><div ng-messages="formEditar.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container></div>',
+    ,link: apsEditFileLink
   };
   return directive;
 }

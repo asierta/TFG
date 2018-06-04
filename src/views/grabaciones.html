@@ -1,6 +1,6 @@
 <md-content ng-hide="!user" layout="column" flex>
   <div ng-hide="!configuracion" id="configuracion" class="check-element animate-show-hide">
-    <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px; height: 100%; width: auto;">
+    <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px;">
       <legend class="demo-legend" style="color: #3F51B5;"><b>Configuración</b></legend>
       <div layout="row" layout-wrap="" flex="" layout-align="center">
         <md-checkbox aria-label="Select All" ng-checked="isChecked()" md-indeterminate="isIndeterminate()" ng-click="toggleAll()">
@@ -128,7 +128,7 @@
             </md-button>
           </td>
           <td md-cell ng-click="editarCSV($event, grabacion)" ng-class="{'md-placeholder': !grabacion.grabacion}" ng-show="exists('CSV', seleccionado)"><span class="dato">{{grabacion.grabacionMostrar}}</span></td>
-          <td md-cell ng-click="editarVideo($event, grabacion)" ng-class="{'md-placeholder': !grabacion.video}" ng-show="exists('Video', seleccionado)"><span class="dato">{{grabacion.videoMostrar}}</span></td>
+          <td md-cell ng-click="editarVideo($event, grabacion)" ng-class="{'md-placeholder': !grabacion.video}" ng-show="exists('Video', seleccionado)"><span class="dato">{{grabacion.videoMostrar || 'Añadir video'}}</span></td>
 
           <td md-cell ng-show="exists('Atributos extra', seleccionado)">
             <md-button ng-click="verAtributosExtra($event,grabacion)" ng-show="grabacion.extra"
