@@ -363,7 +363,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
         if ($scope.selected[i].grabaciones !== undefined) {
           let grabaciones = Object.keys($scope.selected[i].grabaciones);
           for (let j = 0; j < grabaciones.length; j++) {
-            firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabaciones[j]).update({
+            firebase.database().ref('grabaciones').child(getCookie('grupo')).child(grabaciones[j]).update({
               'paciente': '',
               'pacienteKey': '',
               'edadPaciente': '',
@@ -588,7 +588,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
       ok: "guardar",
       controller: editarFechaController,
       template: '<md-edit-dialog style="left: 52px; top: 228.391px; min-width: 149px;" class="ng-scope md-whiteframe-1dp"><div layout="column" class="md-content layout-column"><div class="md-title ng-binding ng-scope" style="">Fecha nacimiento</div>' +
-      '<md-datepicker name="fecha" required ng-model="fechaNacimiento" md-current-view="year" md-hide-icons="calendar" autocomplete=\'bday\'>' +
+      '<md-datepicker name="fecha" required ng-model="fechaNacimiento" md-current-view="year" md-hide-icons="calendar" md-max-date="maxDate" onkeydown="return false;" md-open-on-focus autocomplete=\'bday\'>' +
       '</md-datepicker>' +
       '<div layout="row" layout-align="end" class="md-actions ng-scope layout-align-end-stretch layout-row" style="color: blue;">' +
       '<button class="md-primary md-button md-ink-ripple" type="button" ng-click="close()">cancelar</button>' +
@@ -602,6 +602,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
 
     function editarFechaController($scope, $mdEditDialog, paciente, $element) {
       let fecha = paciente.fechaNacimiento.value.split("/");
+      $scope.maxDate = new Date();
       $scope.fechaNacimiento = new Date(fecha[2] + "-" + fecha[1] + "-" + fecha[0]);
       $scope.close = function () {
         $element.remove();

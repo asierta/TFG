@@ -160,7 +160,7 @@
           </div>
         </md-toolbar>
 
-        <md-dialog-content style="max-width:80%; max-height:80%; min-width: 430px; min-height: 400px;">
+        <md-dialog-content>
           <div class="md-dialog-content">
 
             <div layout="row">
@@ -185,29 +185,33 @@
               <md-input-container flex="50">
                 <label>F. nacimiento</label>
                 <md-datepicker name="fecha" required ng-model="paciente.fecha" md-current-view="year"
-                               autocomplete='bday'></md-datepicker>
+                               autocomplete='bday' md-max-date="maxDate" onkeydown="return false;" md-open-on-focus></md-datepicker>
                 <div ng-messages="formPaciente.fecha.$error" ng-show="formPaciente.fecha.$touched">
                   <div ng-message="valid">Usa el formato DD/MM/AAAA</div>
+                  <div ng-message="maxdate">Elige una fecha anterior a {{maxDateMostrar}}</div>
+                  <div ng-message="required">Fecha requerida</div>
                 </div>
               </md-input-container>
             </div>
 
             <div layout="row">
               <md-input-container flex="50">
-                <label>Peso</label>
-                <input name="peso" ng-model="paciente.peso" type="number" min="0" max="225" step="1">
+                <label>Peso (kg)</label>
+                <input name="peso" ng-model="paciente.peso" type="number" min="0" max="250" step="any">
                 <div ng-messages="formPaciente.peso.$error" ng-show="formPaciente.peso.$touched">
-                  <div ng-message="max">Your field is too long</div>
-                  <div ng-message="min">Your field is too long</div>
+                  <div ng-message="max">El número es demasiado grande</div>
+                  <div ng-message="min">El número es demasiado pequeño</div>
+                  <div ng-message="number">Introduzca un número</div>
                 </div>
               </md-input-container>
 
               <md-input-container class="md-block" flex="50">
-                <label>Altura</label>
+                <label>Altura (cm)</label>
                 <input name="altura" ng-model="paciente.altura" type="number" min="0" max="225" step="1">
                 <div ng-messages="formPaciente.altura.$error" ng-show="formPaciente.altura.$touched">
-                  <div ng-message="max">Your field is too long</div>
-                  <div ng-message="min">Your field is too long</div>
+                  <div ng-message="max">El número es demasiado grande</div>
+                  <div ng-message="min">El número es demasiado pequeño</div>
+                  <div ng-message="number">Introduzca un número</div>
                 </div>
               </md-input-container>
             </div>
@@ -215,11 +219,12 @@
             <div layout="row">
               <md-input-container flex="50">
                 <label>Año inicio enfermedad</label>
-                <input name="inicioEnfermedad" ng-model="paciente.inicioEnfermedad" type="number" step="1" required>
+                <input name="inicioEnfermedad" ng-model="paciente.inicioEnfermedad" type="number" step="1" min="1950" max="{{maxYear}}" required>
                 <div ng-messages="formPaciente.inicioEnfermedad.$error" ng-show="formPaciente.inicioEnfermedad.$touched">
                   <div ng-message="required">Campo requerido.</div>
-                  <div ng-message="max">Your field is too long</div>
-                  <div ng-message="min">Your field is too long</div>
+                  <div ng-message="max">El año no puede ser posterior al actual</div>
+                  <div ng-message="min">El año no puede ser anterior a 1950</div>
+                  <div ng-message="number">Introduzca un año válido</div>
                 </div>
               </md-input-container>
 
@@ -230,7 +235,7 @@
                   <md-option value="2">2</md-option>
                   <md-option value="3">3</md-option>
                 </md-select>
-                <div ng-messages="formPaciente.sexo.$error" ng-show="formPaciente.sexo.$touched">
+                <div ng-messages="formPaciente.clasificacion.$error" ng-show="formPaciente.clasificacion.$touched">
                   <div ng-message="required">Campo requerido.</div>
                 </div>
               </md-input-container>
@@ -258,7 +263,7 @@
                            onkeydown="mdSelectOnKeyDownOverride(event)" class="searchbox">
                   </md-select-header>
                   <md-option ng-value="grabacion" ng-repeat="grabacion in grabaciones | filter:searchTerm" ng-cloak="">
-                    {{grabacion.id + ": " +grabacion.grabacion}}
+                    {{grabacion.id}}
                   </md-option>
                 </md-select>
 

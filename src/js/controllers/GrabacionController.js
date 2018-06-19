@@ -59,16 +59,16 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     return list.indexOf(item) > -1;
   };
 
-  $scope.isIndeterminate = function() {
+  $scope.isIndeterminate = function () {
     return ($scope.seleccionado.length !== 0 &&
       $scope.seleccionado.length !== $scope.tabla.length);
   };
 
-  $scope.isChecked = function() {
+  $scope.isChecked = function () {
     return $scope.seleccionado.length === $scope.tabla.length;
   };
 
-  $scope.toggleAll = function() {
+  $scope.toggleAll = function () {
     if ($scope.seleccionado.length === $scope.tabla.length) {
       $scope.seleccionado = [];
     } else if ($scope.seleccionado.length === 0 || $scope.seleccionado.length > 0) {
@@ -80,58 +80,57 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     let grabacionesMostrar = {};
     let grabaciones = [];
     let database = firebase.database();
-    let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
+    let grabacionesRef = database.ref('grabaciones').child(getCookie('grupo'));
     let error = false;
 
     $scope.promise = grabacionesRef.once('value', function (grabacion) {
       grabacion.forEach(function (grabacionHija) {
         let childData = grabacionHija.val();
-        try{
-        if (($scope.filter === '' || (childData[$scope.query.filterRow] !== undefined && CryptoJS.AES.decrypt(childData[$scope.query.filterRow], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($scope.query.filter.toLowerCase()) > -1))) { //En caso de haber filtro solo se muestran las grabaciones que lo cumplen
-          if (($routeParams.paciente !== 'all' && (CryptoJS.AES.decrypt(childData['paciente'], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($routeParams.paciente.toLowerCase()) > -1)) || $routeParams.paciente === 'all') {
-            for (let clave in childData) {
-              if (childData.hasOwnProperty(clave) && clave !== 'extra' && clave !== 'grabacion' && clave !== 'fechaGrabacion' && clave !== 'notasVideo' && clave !== 'video') {
-                if ((clave === 'edadPaciente' || clave === 'edadGrabacion') && childData[clave] !== undefined  && childData[clave] !== '') {
-                  childData[clave] = Number(CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8));
-                } else {
-                  childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-                }
-              } else if (clave === 'extra') {
-                for (let claveExtra in childData[clave]) {
-                  childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-                }
-              } else if (clave === 'fechaGrabacion') {
-                let dateString = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-                let dateParts = dateString.split("/");
-                let dateObjectGrabacion = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-                childData[clave] = {'value': dateString, 'ts': dateObjectGrabacion.getTime()};
-              } else if (clave === 'notasVideo') {
-                for (let claveExtra in childData[clave]) {
-                  for (let claveExtraExtra in childData[clave][claveExtra]) {
-                    childData[clave][claveExtra][claveExtraExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra][claveExtraExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+        try {
+          if (($scope.filter === '' || (childData[$scope.query.filterRow] !== undefined && CryptoJS.AES.decrypt(childData[$scope.query.filterRow], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($scope.query.filter.toLowerCase()) > -1))) { //En caso de haber filtro solo se muestran las grabaciones que lo cumplen
+            if (($routeParams.paciente !== 'all' && (CryptoJS.AES.decrypt(childData['paciente'], getCookie('clave')).toString(CryptoJS.enc.Utf8).toLowerCase().indexOf($routeParams.paciente.toLowerCase()) > -1)) || $routeParams.paciente === 'all') {
+              for (let clave in childData) {
+                if (childData.hasOwnProperty(clave) && clave !== 'extra' && clave !== 'grabacion' && clave !== 'fechaGrabacion' && clave !== 'notasVideo' && clave !== 'video') {
+                  if ((clave === 'edadPaciente' || clave === 'edadGrabacion') && childData[clave] !== undefined && childData[clave] !== '') {
+                    childData[clave] = Number(CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8));
+                  } else {
+                    childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
                   }
+                } else if (clave === 'extra') {
+                  for (let claveExtra in childData[clave]) {
+                    childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                  }
+                } else if (clave === 'fechaGrabacion') {
+                  let dateString = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                  let dateParts = dateString.split("/");
+                  let dateObjectGrabacion = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+                  childData[clave] = {'value': dateString, 'ts': dateObjectGrabacion.getTime()};
+                } else if (clave === 'notasVideo') {
+                  for (let claveExtra in childData[clave]) {
+                    for (let claveExtraExtra in childData[clave][claveExtra]) {
+                      childData[clave][claveExtra][claveExtraExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra][claveExtraExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+                    }
+                  }
+                } else if (clave === 'video') {
+                  childData[clave] = childData[clave];
+                  childData['videoMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
+                } else if (clave === 'grabacion') {
+                  childData[clave] = childData[clave];
+                  childData['grabacionMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
                 }
-              }else if (clave === 'video'){
-                childData[clave] = childData[clave];
-                childData['videoMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
-              }else if (clave === 'grabacion'){
-                childData[clave] = childData[clave];
-                childData['grabacionMostrar'] = childData[clave].split("-")[0] + "." + childData[clave].split(".")[1];
               }
+              childData['key'] = grabacionHija.key;
+              grabaciones.push(childData);
             }
-            childData['key'] = grabacionHija.key;
-            grabaciones.push(childData);
           }
-
-        }
         }
         catch (err) {
           console.log(err);
           error = true;
         }
       });
-      if (error){
-        showToast("La clave de encriptación introducida es incorrecta, inicie sesión de nuevo");
+      if (error) {
+        showToastGrabacion("La clave de encriptación introducida es incorrecta, inicie sesión de nuevo");
       }
       grabacionesMostrar['count'] = grabaciones.length;
       grabacionesMostrar['data'] = grabaciones;
@@ -148,17 +147,17 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     $scope.promise = pacientesRef.once('value', function (paciente) {
       paciente.forEach(function (pacienteHijo) {
         let childData = pacienteHijo.val();
-          for (let clave in childData) {
-            if (childData.hasOwnProperty(clave) && clave !== 'extra') {
-              childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-            } else {
-              for (let claveExtra in childData[clave]) {
-                childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
-              }
+        for (let clave in childData) {
+          if (childData.hasOwnProperty(clave) && clave !== 'extra') {
+            childData[clave] = CryptoJS.AES.decrypt(childData[clave], getCookie('clave')).toString(CryptoJS.enc.Utf8);
+          } else {
+            for (let claveExtra in childData[clave]) {
+              childData[clave][claveExtra] = CryptoJS.AES.decrypt(childData[clave][claveExtra], getCookie('clave')).toString(CryptoJS.enc.Utf8);
             }
           }
-          childData['key'] = pacienteHijo.key;
-          pacientes.push(childData);
+        }
+        childData['key'] = pacienteHijo.key;
+        pacientes.push(childData);
       });
       return pacientes;
     });
@@ -176,7 +175,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       targetEvent: event,
       templateUrl: 'grabacion-dialog.template.html',
     }).then(function (pacienteCreado) {
-      console.log(pacienteCreado.creado);
       if (pacienteCreado.creado) {
         $scope.loadStuff();
       }
@@ -201,28 +199,28 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       let database = firebase.database();
       let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
       for (let i = 0; i < $scope.selected.length; i++) {//Borramos todas las grabaciones seleccionadas
-        firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" +$scope.selected[i].grabacion.split(".")[0] + ".json").delete();
+        firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" + $scope.selected[i].grabacion.split(".")[0] + ".json").delete();
         firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + $scope.selected[i].grabacion).delete();
         if ($scope.selected[i].video !== undefined) {
           firebase.storage().ref('videos/' + getCookie('grupo') + "/" + $scope.selected[i].video).delete();
         }
-        if ($scope.selected[i].paciente !== undefined) {
+        if ($scope.selected[i].paciente !== undefined && $scope.selected[i].paciente !== "") {
           firebase.database().ref('pacientes').child(getCookie('grupo')).child($scope.selected[i].pacienteKey).child('grabaciones').child($scope.selected[i].key).remove();
         }
         grabacionesRef.child($scope.selected[i].key).remove()
           .catch(err => {
-            showToast("Problema borrando grabación", err);
+            showToastGrabacion("Problema borrando grabación", err);
           });
       }
-      showToast(($scope.selected.length > 1 ? 'Grabaciones borradas ' : 'Grabación borrada ') + "correctamente");
+      showToastGrabacion(($scope.selected.length > 1 ? 'Grabaciones borradas ' : 'Grabación borrada ') + "correctamente");
 
       $scope.selected = [];
       $scope.loadStuff();
     }, function () {
-      showToast("Borrado de " + ($scope.selected.length > 1 ? 'grabaciones' : 'grabación') + " cancelado")
+      showToastGrabacion("Borrado de " + ($scope.selected.length > 1 ? 'grabaciones' : 'grabación') + " cancelado")
     });
 
-    function showToast(content) {
+    function showToastGrabacion(content) {
       $mdToast.show($mdToast.simple()
         .content(content)
         .position('bottom right')
@@ -304,11 +302,9 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
         let fechaFormateada = moment($scope.fechaGrabacion).format('DD/MM/YYYY');
         grabacion.fechaGrabacion.value = fechaFormateada;
         grabacion.fechaGrabacion.ts = $scope.fechaGrabacion.getTime();
-        if (grabacion.paciente !== undefined && grabacion.paciente !== ""){
-          for (var paciente in pacientes)
-          {
-            if (pacientes[paciente].id === grabacion.paciente)
-            {
+        if (grabacion.paciente !== undefined && grabacion.paciente !== "") {
+          for (var paciente in pacientes) {
+            if (pacientes[paciente].id === grabacion.paciente) {
               let fechaArray = pacientes[paciente].fechaNacimiento.split("/");
               let fecha = new Date(fechaArray[2] + "-" + fechaArray[1] + "-" + fechaArray[0]);
               let edadGrabacion = calcularEdadEnFecha(fecha, $scope.fechaGrabacion);
@@ -320,7 +316,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
               break;
             }
           }
-        }else{
+        } else {
           firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({
             'fechaGrabacion': CryptoJS.AES.encrypt(fechaFormateada, getCookie('clave')).toString()
           });
@@ -341,11 +337,11 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       ok: "guardar",
       controller: editarCSVController,
       template: '<md-edit-dialog style="left: 52px; top: 228.391px; min-width: 149px;" class="ng-scope md-whiteframe-1dp"><div layout="column" class="md-content layout-column"><div class="md-title ng-binding ng-scope" style="">CSV Grabación</div>' +
-      '<form name="formEditar" ng-submit="guardar()">'+
+      '<form name="formEditar" ng-submit="guardar()">' +
       '<aps-edit-file></aps-edit-file>' +
       '<button class="md-primary md-button md-ink-ripple" type="button" ng-click="close()">cancelar</button>' +
       '<button  type="submit" class="md-primary md-button md-ink-ripple" ng-disabled="formEditar.$invalid">guardar</button>' +
-        '</form>' +
+      '</form>' +
       '</div>' +
       '</md-edit-dialog>',
       locals: {
@@ -358,21 +354,21 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       $scope.editaCSV = true;
       $scope.formatos = ".csv";
       $scope.guardar = function () {
-       if ($scope.files[0]) {
-         firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" + grabacion.grabacion.split(".")[0] + ".json").delete();
-         firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + grabacion.grabacion).delete();
-         let reader = new FileReader();
-         let fileId = $scope.files[0].name.split(".")[0] + "-" + guid() + ".csv";
-         reader.onload = function () {
-           let file = reader.result;
-           almacenarFicheroGrabacion(file, fileId);
-           subirFicheroConvertidoJSON(file, fileId);
-         };
-         firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({'grabacion': fileId});
-         grabacion.grabacion = fileId;
-         grabacion.grabacionMostrar =  $scope.files[0].name;
-         reader.readAsText($scope.files[0]);
-       }
+        if ($scope.files[0]) {
+          firebase.storage().ref('grabacionesJSON/' + getCookie('grupo') + "/" + grabacion.grabacion.split(".")[0] + ".json").delete();
+          firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + grabacion.grabacion).delete();
+          let reader = new FileReader();
+          let fileId = $scope.files[0].name.split(".")[0] + "-" + guid() + ".csv";
+          reader.onload = function () {
+            let file = reader.result;
+            almacenarFicheroGrabacion(file, fileId);
+            subirFicheroConvertidoJSON(file, fileId);
+          };
+          firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({'grabacion': fileId});
+          grabacion.grabacion = fileId;
+          grabacion.grabacionMostrar = $scope.files[0].name;
+          reader.readAsText($scope.files[0]);
+        }
         $scope.close();
       };
 
@@ -382,7 +378,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     }
 
     function almacenarFicheroGrabacion(file, id) {
-      let storageRef = firebase.storage().ref('grabaciones/'+ getCookie('grupo') + "/" + id);
+      let storageRef = firebase.storage().ref('grabaciones/' + getCookie('grupo') + "/" + id);
       let task = storageRef.putString(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
       task.on('state_changed', function progress(snapshot) {
       }, function error(err) {
@@ -437,7 +433,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       ok: "guardar",
       controller: editarVideoController,
       template: '<md-edit-dialog style="left: 52px; top: 228.391px; min-width: 149px;" class="ng-scope md-whiteframe-1dp"><div layout="column" class="md-content layout-column"><div class="md-title ng-binding ng-scope" style="">Video grabación</div>' +
-      '<form>'+
+      '<form>' +
       '<aps-edit-file></aps-edit-file>' +
       '<button class="md-primary md-button md-ink-ripple" type="button" ng-click="close()">cancelar</button>' +
       '<button class="md-primary md-button md-ink-ripple" ng-click="guardar()">guardar</button>' +
@@ -455,7 +451,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       $scope.formatos = "video/*";
       $scope.guardar = function () {
         if ($scope.files !== undefined && $scope.files[0]) {
-          if (grabacion.video !== undefined && grabacion.video !== ""){
+          if (grabacion.video !== undefined && grabacion.video !== "") {
             firebase.storage().ref('videos/' + getCookie('grupo') + "/" + grabacion.video).delete();
           }
           let videoFile = $scope.files[0];
@@ -505,29 +501,30 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   };
 
   $scope.actualizarPaciente = function (paciente, grabacion) {
-    if (paciente === undefined) {//Si se deja sin asignar la grabacion
-      delete grabacion.edadGrabacion;
-      delete grabacion.edadPaciente;
+    if (paciente === undefined && grabacion.paciente !== "") {//Si se deja sin asignar la grabacion
       firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({
         'paciente': '',
         'pacienteKey': '',
         'edadPaciente': '',
         'edadGrabacion': ''
       }).then(function (actualizado) {
-        if (grabacion.paciente !== "") {
-          firebase.database().ref('pacientes/' + getCookie('grupo')).child(grabacion.pacienteKey).child('grabaciones').child(grabacion.key).remove();
+        delete grabacion.edadGrabacion;
+        delete grabacion.edadPaciente;
+        if (grabacion.paciente) {
+          firebase.database().ref('pacientes').child(getCookie('grupo')).child(grabacion.pacienteKey).child('grabaciones').child(grabacion.key).remove();
+          delete grabacion.paciente;
+          delete grabacion.pacienteKey;
+
         }
-        showToast("Grabación actualizada");
+        showToastGrabacion("Grabación actualizada");
       });
-    } else if ((paciente.id) !== grabacion.paciente) {
+    } else if (grabacion.paciente !== paciente.id) {
       let fechaNacimientoPartida = paciente.fechaNacimiento.split("/");
       let fechaNacimiento = new Date(fechaNacimientoPartida[2], fechaNacimientoPartida[1] - 1, fechaNacimientoPartida[0]);
 
       let fechaGrabacionPartida = grabacion.fechaGrabacion.value.split("/");
       let fechaGrabacion = new Date(fechaGrabacionPartida[2], fechaGrabacionPartida[1] - 1, fechaGrabacionPartida[0]);
 
-      grabacion.edadGrabacion = calcularEdadEnFecha(fechaNacimiento, fechaGrabacion);
-      grabacion.edadPaciente = calcularEdad(fechaNacimiento);
       firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).update({
         'paciente': CryptoJS.AES.encrypt(paciente.id, getCookie('clave')).toString(),
         'pacienteKey': CryptoJS.AES.encrypt(paciente.key, getCookie('clave')).toString(),
@@ -535,10 +532,14 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
         'edadGrabacion': CryptoJS.AES.encrypt(calcularEdadEnFecha(fechaNacimiento, fechaGrabacion).toString(), getCookie('clave')).toString()
       }).then(function (actualizado) {
         firebase.database().ref('pacientes/' + getCookie('grupo')).child(paciente.key).child('grabaciones').child(grabacion.key).set(true);
-        if (grabacion.paciente !== "") {
+        if (grabacion.paciente) {
           firebase.database().ref('pacientes/' + getCookie('grupo')).child(grabacion.pacienteKey).child('grabaciones').child(grabacion.key).remove();
         }
-        showToast("Grabación actualizada, paciente " + paciente.id + " asignado");
+        grabacion.edadGrabacion = calcularEdadEnFecha(fechaNacimiento, fechaGrabacion);
+        grabacion.edadPaciente = calcularEdad(fechaNacimiento);
+        grabacion.paciente = paciente.id;
+        grabacion.pacienteKey = paciente.key;
+        // showToastGrabacion("Grabación actualizada, paciente " + paciente.id + " asignado");
       });
     }
   };
@@ -671,7 +672,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       function crearCampoExtra(n) {
         firebase.database().ref('camposExtraGrabaciones/').push($scope.searchText[n]).then(function (snapshot) {
           $scope.nombreAtributosExtra = loadAll();
-          showToast("Campo extra " + $scope.searchText[n] + " creado");
+          showToastGrabacion("Campo extra " + $scope.searchText[n] + " creado");
           $scope.$apply(function () {
             $scope.searchText[n] = ""; //Reiniciar texto de busqueda para eliminar el botón de CREAR
           });
@@ -888,19 +889,24 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
         $mdDialog.show(confirm).then(function () {
           for (let i = 0; i < $scope.selected.length; i++) {//Borramos todas las grabaciones seleccionadas
             let keyNota = $scope.selected[i].key;
-            firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).child('notasVideo').child($scope.selected[i].key).remove().then(function () {
+            firebase.database().ref('grabaciones').child(getCookie('grupo')).child(grabacion.key).child('notasVideo').child($scope.selected[i].key).remove().then(function () {
               delete grabacion.notasVideo[keyNota];
-              showToast(($scope.selected.length > 1 ? 'Notas borradas ' : 'Nota borrada ') + "correctamente");
               $scope.selected = [];
-              $scope.loadStuff();
+              if (Object.keys(grabacion.notasVideo).length === 0) {
+                delete grabacion.notasVideo;
+                $scope.notas = {};
+                $scope.$apply;
+              } else {
+                $scope.loadStuff();
+              }
             })
           }
-
+          showToastGrabacion(($scope.selected.length > 1 ? 'Notas borradas ' : 'Nota borrada ') + "correctamente");
         }, function () {
-          showToast("Borrado de " + ($scope.selected.length > 1 ? 'notas' : 'nota') + " cancelado")
+          showToastGrabacion("Borrado de " + ($scope.selected.length > 1 ? 'notas' : 'nota') + " cancelado")
         });
 
-        function showToast(content) {
+        function showToastGrabacion(content) {
           $mdToast.show($mdToast.simple()
             .content(content)
             .position('bottom right')
@@ -1014,7 +1020,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '</md-toolbar>' +
       '<md-dialog-content>' +
       '<md-progress-linear ng-disabled="!loading" ng-show="loading" md-mode="indeterminate"></md-progress-linear>' +
-      '<div ng-show="loading" style="text-align: center; padding-top: 5%; padding-bottom: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>'+
+      '<div ng-show="loading" style="text-align: center; padding-top: 5%; padding-bottom: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>' +
       '<table class="prevCSVs">' +
       '<tr>' +
       '<th ng-repeat="c in fields">{{ c }}</th>' +
@@ -1080,7 +1086,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       parent: angular.element(document.body),
       clickOutsideToClose: true,
       template:
-      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; max-width: 90%; min-width: 50%; min-height: 50%;">' +
+      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; max-width: 93%; min-width: 50%; min-height: 50%;">' +
       ' <md-toolbar>' +
       '          <div class="md-toolbar-tools">' +
       '            <h2>Visualizar esqueleto</h2>' +
@@ -1091,11 +1097,11 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '          </div>' +
       '        </md-toolbar>' +
       '<md-progress-linear ng-disabled="!loading" ng-show="loading" md-mode="indeterminate"></md-progress-linear>' +
-      '<div ng-show="loading" style="text-align: center; padding-top: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>'+
+      '<div ng-show="loading" style="text-align: center; padding-top: 5%; font-size: medium; font-weight: bold; color:#757575;" letter-spacing: .2px;>{{textoCarga}}</div>' +
       '<md-dialog-content ng-hide="loading">' +
-
-      '<div flex-gt-sm="50" style="margin-left: 10px; margin-top: 10px;">' +
-      'Visualizar: ' +
+      ' <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px;">\n' +
+      '      <legend class="demo-legend" style="color: #3F51B5;"><b>Visualizar</b></legend>\n' +
+      '      <div layout="row" layout-wrap="" flex="" layout-align="center">\n' +
       '<md-checkbox ng-model="visualizarVideo" aria-label="visualizarVideo" ng-show="hayVideo">' +
       'Video' +
       '</md-checkbox>' +
@@ -1105,7 +1111,8 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '<md-checkbox ng-model="visualizarEsqueletoLateral" aria-label="visualizarEsqueletoFrontal">' +
       'Esqueleto Lateral' +
       '</md-checkbox>' +
-      '</div>' +
+      '      </div>\n' +
+      '    </fieldset>'+
       ' <p style="margin-left: 10px; margin-top: 10px; font-size: 100%;"> Pulse en cualquier punto del esqueleto para añadir una nota.</p>' +
       '<div layout="row" ng-cloak="" layout-align="center center">' +
       '<div layout-align="center center" flex="65" style="margin-left: 10px; margin-right: 10px; margin-bottom: 10px;" ng-show="visualizarVideo">' +
@@ -1138,13 +1145,13 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '	0:00' +
       '</div>' +
 
-      '<div class="right-side-controls">' +
+      '<div class="right-side-controls" ng-show="hayVideo">' +
       <!-- mute-unmute Control -->
       '<div class="volume-btn preview-controls-main control" id="mute/unmute">' +
       '	<i class="material-icons vid-icon">volume_up</i>' +
       '</div>' +
       '<!--change volume-->\n' +
-      '<div id="volume-bar-holder" class="control">\n' +
+      '<div id="volume-bar-holder" class="control" style="padding-right: 15px;">\n' +
       '<input id="volume-bar" type="range" value="0.5" min="0" max="1" step="0.1">\n' +
       '</div>' +
       '</div><!--end of right side controls div-->' +
@@ -1368,7 +1375,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   }
                 }
               }
-            }else{
+            } else {
               video.currentTime = video.duration;
             }
           };
@@ -1431,12 +1438,12 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   segundo: CryptoJS.AES.encrypt(tiempoActual.toString(), getCookie('clave')).toString(),
                   texto: CryptoJS.AES.encrypt(result.toString(), getCookie('clave')).toString()
                 };
-                firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).child('notasVideo').push(nota);
+                let notaRef = firebase.database().ref('grabaciones/' + getCookie('grupo')).child(grabacion.key).child('notasVideo').push(nota);
                 nota = {x: posRaton.x, y: posRaton.y, segundo: tiempoActual.toString(), texto: result, fila: j + 100};
                 if (grabacion.notasVideo === undefined) {//Si todavia no hay ninguna nota
-                  grabacion['notasVideo'] = {result: nota};
+                  grabacion['notasVideo'] = {[notaRef.key]: nota};
                 } else {
-                  grabacion['notasVideo'][result] = nota;
+                  grabacion['notasVideo'][notaRef.key] = nota;
                 }
                 notaEnPantalla.push(nota);
               }
@@ -1506,7 +1513,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           function pintarEsqueleto() {
             if (!pausa) {
               j++;
-              let x,y,z;
+              let x, y, z;
               if (video.duration < $scope.duracion && (video.currentTime === video.duration)) {
                 oeseekBar.value = (tiemposEsqueleto[j] / 1000) * (100 / $scope.duracion);
                 let curMins = Math.floor((tiemposEsqueleto[j] / 1000) / 60);
@@ -1565,7 +1572,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   video.play();
                 }
 
-                for (i = 1; i < (linea.length - 8); i = i + 4) {//Para cada uno de los joints
+                for (i = 1; i < (101); i = i + 4) {//Para cada uno de los joints
                   if (linea[i + 1] === "-" || linea[i + 1] === "-") {//Si no hay informacion sobre la posición
                     x = 0;
                     y = 0;
@@ -1810,7 +1817,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           function pintarEsqueleto() {
             if (!pausa) {
               j++;
-              let x,y,z;
+              let x, y, z;
               oeseekBar.value = (tiemposEsqueleto[j] / 1000) * (100 / $scope.duracionEsqueleto);
 
               let curMins = Math.floor((tiemposEsqueleto[j] / 1000) / 60);
@@ -1864,7 +1871,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   ctxLateral.closePath();
                 }
 
-                for (i = 1; i < (linea.length - 8); i = i + 4) {//Para cada uno de los joints
+                for (i = 1; i < (101); i = i + 4) {//Para cada uno de los joints
                   if (linea[i + 1] === "-" || linea[i + 1] === "-") {//Si no hay informacion sobre la posición
                     x = 0;
                     y = 0;
@@ -1989,15 +1996,51 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     });
   };
 
-  $scope.exportarJSON = function (grabacion) {
-    firebase.storage().ref('grabacionesJSON/').child(getCookie('grupo')).child(grabacion.split(".")[0] + ".json").getDownloadURL().then(function (url) {
+  $scope.exportarJSON = function (grabacion, notasVideo) {
+    firebase.storage().ref('grabaciones/' + getCookie('grupo')).child(grabacion).getDownloadURL().then(function (url) {
       fetch(url)
         .then(res => res.blob()) // Gets the response and returns it as a blob
         .then(blob => {
           let reader = new FileReader();
           reader.onload = function () {
             let file = CryptoJS.AES.decrypt(reader.result, getCookie('clave')).toString(CryptoJS.enc.Utf8);
+            //
+            let grabacionParse = Papa.parse(file);
+            let camara = {};
+            for (let i = 2; i < grabacionParse.data.length - 1; i++) {//Para cada unidad de tiempo
+              let joints = {};
+              let joint = {};
+              let linea = grabacionParse.data[i];
+              let tiempo = linea[0];
+              let ms = encodeURIComponent(linea[0]).replace(/\./g, '%2E');//Reemplazamos los simbolos no aceptados como claves en Firebase
+              for (let k = 1; k < (linea.length - 8); k = k + 4) {//Para cada uno de los joints
+                joint = {};
+                joint['x'] = linea[k + 1];
+                joint['y'] = linea[k + 2];
+                joint['z'] = linea[k + 3];
+                joint['inf'] = linea[k];
+                joints[(k - 1) / 4] = joint; //Añadimos el joint al conjunto de joints
+              }
+              let notas = {};
+              let notaJSON = {};
+              for (let obj in notasVideo) {
+                let nota = notasVideo[obj];
+                if (nota.segundo === tiempo) {
+                  notaJSON['texto'] = nota.texto;
+                  notaJSON['x'] = nota.x;
+                  notaJSON['y'] = nota.y;
+                  notaJSON['segundo'] = nota.segundo;
+                  notas[nota.texto] = notaJSON;
+                }
+              }
+              if (Object.keys(notas).length !== 0) {
+                joints['notas'] = notas;
+              }
+              camara[tiempo] = joints;//Añadimos los joints a la unidad de tiempo
+            }
+            file = JSON.stringify(camara);
             let json = JSON.parse(file);
+            //
             let blob = new Blob([JSON.stringify(json, null, 4)], {type: "application/json"});
             let url = URL.createObjectURL(blob);
             let element = document.createElement('a');
@@ -2010,8 +2053,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           };
           reader.readAsText(blob);
         });
-
-
     }).catch(function (error) {
       // Handle any errors
       console.log(error);
@@ -2031,17 +2072,12 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   };
 
   $scope.logItem = function (item) {
-    console.log(item.id, 'was selected');
-    console.log($scope.selected);
   };
 
   $scope.logOrder = function (order) {
-    console.log('orden: ', order);
   };
 
   $scope.logPagination = function (page, limit) {
-    console.log('página: ', page);
-    console.log('límite: ', limit);
   };
 
   $scope.removeFilter = function () {
@@ -2070,7 +2106,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   });
 
   //----------Funciones Auxiliares----------//
-  function showToast(content) {
+  function showToastGrabacion(content) {
     $mdToast.show($mdToast.simple()
       .content(content)
       .position('bottom right')
@@ -2104,7 +2140,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   }
 
   function calcularEdadEnFecha(birthDate, fecha) {
-    console.log(birthDate, fecha);
     var age = fecha.getFullYear() - birthDate.getFullYear();
     var m = fecha.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && fecha.getDate() < birthDate.getDate())) {
@@ -2127,7 +2162,7 @@ function apsEditFile() {
     restrict: 'E',
     template: '<div><input id="fileInput" type="file" class="ng-hide" ng-model="files" aria-label="CSV" accept="{{formatos}}"><md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float> <input required id="textInput" ng-model="fileName" name="fileName" type="text" placeholder="No file chosen" ng-readonly="true"><div ng-messages="formEditar.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container></div>'
     // '<div ng-show="editaVideo"><input id="fileInput" type="file" class="ng-hide" ng-model="files" aria-label="CSV" accept=".mp4, .mkv, .webm, .wmv"><md-button id="uploadButton" class="md-raised md-primary" aria-label="attach_file"> Elegir fichero </md-button><md-input-container  md-no-float> <input required id="textInput" ng-model="fileName" name="fileName" type="text" placeholder="No file chosen" ng-readonly="true"><div ng-messages="formEditar.fileName.$error"><div ng-message="required">Campo requerido.</div></div></md-input-container></div>',
-    ,link: apsEditFileLink
+    , link: apsEditFileLink
   };
   return directive;
 }
@@ -2138,16 +2173,15 @@ function apsEditFileLink(scope, element, attrs) {
   var textInput = $(element[0].querySelector('#textInput'));
 
   if (input.length && button.length && textInput.length) {
-    console.log("dfa");
-    button.click(function(e) {
+    button.click(function (e) {
       input.click();
     });
-    textInput.click(function(e) {
+    textInput.click(function (e) {
       input.click();
     });
   }
 
-  input.on('change', function(e) {
+  input.on('change', function (e) {
     var files = e.target.files;
     scope.files = files;
     if (files[0]) {

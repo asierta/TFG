@@ -21,6 +21,7 @@
         <md-icon md-svg-icon="img/icons/menu.svg"></md-icon>
       </md-button>
       <h2 flex md-truncate>TFG</h2>
+      <h5> {{username}}</h5>
       <span>
           <md-button ng-show="sesionIniciada && sesionIniciada !== null" class="md-accent md-raised"
                      ng-click="cerrarSesion()">
@@ -99,7 +100,7 @@
           </md-dialog-content>
 
           <md-dialog-actions layout="row">
-            <a ng-click="restaurarPassword($event)" class="md-primary" id="restaurarPassword">Has olvidado la contraseña?</a>
+            <a ng-click="restaurarPassword($event)" class="md-primary" id="restaurarPassword">¿Has olvidado la contraseña?</a>
             <span flex></span>
             <md-button type="submit" ng-disabled="loginForm.$invalid" class="md-raised md-primary">Iniciar Sesión</md-button>
           </md-dialog-actions>
@@ -129,14 +130,10 @@
 <!-- Controllers -->
 <script src="js/controllers/MainController.js"></script>
 <script src="js/controllers/MenuController.js"></script>
-<script src="js/controllers/LoginController.js"></script>
-<script src="js/controllers/ImportarDatosController.js"></script>
 <script src="js/controllers/PacienteController.js"></script>
 <script src="js/controllers/CrearPacienteController.js"></script>
-<script src="js/controllers/BorrarPacienteController.js"></script>
 <script src="js/controllers/GrabacionController.js"></script>
 <script src="js/controllers/CrearGrabacionController.js"></script>
-<script src="js/controllers/BorrarGrabacionController.js"></script>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-app.js"></script>
@@ -155,7 +152,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.4.0/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material-data-table/0.10.10/md-data-table.min.js"></script>
-<!--<script type="text/javascript" src="https://unpkg.com/default-passive-events"></script>-->
+<script type="text/javascript" src="https://unpkg.com/default-passive-events"></script>
 
 <script>
   // Initialize Firebase

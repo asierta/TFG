@@ -76,7 +76,7 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
 
     atributosObligatorios["extra"] = atributosExtra;
     newStoreRef.set(atributosObligatorios).then(fun => {
-      showToast('Grabacion creada correctamente');
+      showToast('Grabación creada correctamente');
       $scope.close(true);
     }).catch(er => {
       console.log(er);
@@ -109,8 +109,6 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
       contentType: 'text/csv',
       name: file.name
     };
-    // console.log(file);
-    // console.log(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
     let task = storageRef.putString(CryptoJS.AES.encrypt(file, getCookie('clave')).toString());
     task.on('state_changed', function progress(snapshot) {
     }, function error(err) {
@@ -325,7 +323,6 @@ app.controller('CrearGrabacionController', function ($scope, $compile, $window, 
   }
 
   function calcularEdadEnFecha(birthDate, fecha) {
-    console.log(birthDate, fecha);
     var age = fecha.getFullYear() - birthDate.getFullYear();
     var m = fecha.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && fecha.getDate() < birthDate.getDate())) {
@@ -377,7 +374,6 @@ function apsUploadFileLink(scope, element) {
   //Cuando se selecciona un fichero se guarda en $scope.files y se actualiza el input con su nombre
   input.on('change', function (e) {
       let files = e.target.files;
-      console.log(files);
       scope.files = files;
       if (files[0]) {
         scope.fileName = files[0].name;
@@ -391,13 +387,12 @@ function apsUploadFileLink(scope, element) {
 
   videoInput.on('change', function (e) {
       let files = e.target.files;
-      console.log(files);
       scope.videoFiles = files;
       if (files[0]) {
         scope.videoFileName = files[0].name;
         if (files[0].name.split(".")[1].localeCompare("csv") === 0) {
           // almacenarFicheroGrabacionVideo(files[0]);
-          console.log("no es video");
+          console.log("No es video");
         }
       }
       scope.$apply();

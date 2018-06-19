@@ -2,12 +2,7 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
   $scope.sesionIniciada = null;
   firebase.auth().onAuthStateChanged(function (user) {
     $scope.sesionIniciada = !!user;
-    // if ( user && (getCookie('clave') === "" || getCookie('grupo') === "")) {
-    //   firebase.auth().signOut().then(function () {
-    //   }).catch(function (error) {
-    //     console.log(error.message);
-    //   });
-    // }
+    $scope.username = getCookie('username');
     $scope.$apply();
   });
 
@@ -38,6 +33,8 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
             }
             document.cookie = "grupo=" + credentials.grupo + ";";
             document.cookie = "clave=" + clave + ";";
+            document.cookie = "username=" + credentials.username + ";";
+            $scope.username = credentials.username;
 
           });
           return showToast("Bienvenido " + credentials.username + ".");
@@ -57,6 +54,7 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
       showToast("Sesión finalizada correctamente");
       document.cookie = "grupo=;";
       document.cookie = " clave=;";
+      document.cookie = " username=;";
     }).catch(function (error) {
       showToast(error.message);
     });
@@ -132,11 +130,11 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
         '                <input name="username" ng-model="email" type="email" md-autofocus required title="email"\n' +
         '                       autocomplete="username"/>\n' +
         '                <div ng-messages="passwordForm.username.$error" ng-show="passwordForm.username.$touched">\n' +
-        '                  <div ng-message="required">El usuario es obligatorio</div>\n' +
+        '                  <div ng-message="required">Es obligatorio introducir el correo electrónico</div>\n' +
         '                  <div ng-message="email">Introduce una dirección de correo válida</div>\n' +
         '                </div>\n' +
         '              </md-input-container>\n' +
-        '              <div id="error-submit" style="color:red"></div>\n' +
+        '              <div id="error-submit-password" style="color:red"></div>\n' +
         '            </div>\n' +
         '          </md-dialog-content>\n' +
         '          <md-dialog-actions layout="row">\n' +
@@ -156,7 +154,8 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
             $scope.close();
           }).catch(function (error) {
             // An error happened.
-            showToast("Hubo un problema al enviar el correo de restauración");
+            var element = angular.element(document.querySelector('#error-submit-password'));
+            element.text("Hubo un problema al enviar el correo de restauración");
           });
         };
 
@@ -193,6 +192,9 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
               } else {
                 firebase.auth().signInWithEmailAndPassword(username, password).then(function () {
                   $mdDialog.hide({username: username, password: password, clave: clave.toString(), grupo: grupo});
+                }).catch(function(error) {
+                  var element = angular.element(document.querySelector('#error-submit'));
+                  element.text("Usuario y/o contraseña incorrectos");
                 });
               }
             }
@@ -209,8 +211,6 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
         element.text(errorMessage);
         showToast(errorMessage);
       }
-
-
     };
   }
 

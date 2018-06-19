@@ -17,6 +17,9 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
   $scope.searchTerm = '';
   $scope.nCampoExtra = 0;
   $scope.numeroAtributos = [];
+  $scope.maxDate = new Date();
+  $scope.maxYear = (new Date()).getFullYear();
+  $scope.maxDateMostrar = moment($scope.maxDate).format('DD/MM/YYYY');
 
   $scope.crearPaciente = function () {
     let rootRef = firebase.database().ref('pacientes/' + getCookie('grupo'));
@@ -48,7 +51,6 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
     }
 
     if ($scope.paciente.peso !== '' && $scope.paciente.peso !== null) {
-      console.log($scope.paciente.peso);
       atributosObligatorios["peso"] = CryptoJS.AES.encrypt($scope.paciente.peso.toString(), getCookie('clave')).toString();
     }
 
@@ -57,7 +59,7 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
       grabacionesRef.push(grabacion);
       let fecha = $scope.paciente.grabacion.fechaGrabacion.value.split("/");
       let time = new Date(fecha[2] + "-" + fecha[1] + "-" + fecha[0]);
-      firebase.database().ref('grabaciones/').child($scope.paciente.grabacion.key).update({
+      firebase.database().ref('grabaciones').child(getCookie('grupo')).child($scope.paciente.grabacion.key).update({
         'paciente': CryptoJS.AES.encrypt($scope.paciente.nombre, getCookie('clave')).toString(),
         'pacienteKey': CryptoJS.AES.encrypt(newStoreRef.key, getCookie('clave')).toString(),
         'edadPaciente': CryptoJS.AES.encrypt(calcularEdad($scope.paciente.fecha).toString(), getCookie('clave')).toString(),
@@ -275,7 +277,6 @@ app.controller('CrearPacienteController', function ($scope, $compile, $timeout, 
     }
     return age;
   }
-
 
 }).config(function ($mdDateLocaleProvider) {//Personalizar calendario en español
   // Example of a Spanish localization.
