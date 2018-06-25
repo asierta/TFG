@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-	<title>Gestión pacientes parkinson</title>
+	<title>Gestión pacientes Parkinson</title>
 	<link rel="icon" type="image/x-icon" href="favicon.png" />
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,11 +17,13 @@
 <div ng-controller="MenuCtrl" layout-align="center center" layout="column" flex>
   <md-toolbar class="md-hue-2">
     <div class="md-toolbar-tools">
-      <md-button class="md-icon-button" ng-click="toggleLeft()">
+      <md-button class="md-icon-button" ng-click="toggleLeft()" ng-show="sesionIniciada">
         <md-icon md-svg-icon="img/icons/menu.svg"></md-icon>
       </md-button>
-      <h2 flex md-truncate>TFG</h2>
+      <!--<h2 flex md-truncate>TFG</h2>-->
+      <p flex md-truncate><img src="https://image.ibb.co/n2vujd/Dibujo_sin_t_tulo_1.png" alt="logotipo_de_parking_son" border="0" style="max-width: 75px;"></p>
       <h5> {{username}}</h5>
+      <h5 style="color: white;"> {{error}}</h5>
       <span>
           <md-button ng-show="sesionIniciada && sesionIniciada !== null" class="md-accent md-raised"
                      ng-click="cerrarSesion()">

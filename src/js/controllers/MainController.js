@@ -2,6 +2,16 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
   $scope.sesionIniciada = null;
   firebase.auth().onAuthStateChanged(function (user) {
     $scope.sesionIniciada = !!user;
+    if (!user){
+      document.cookie = "grupo=;";
+      document.cookie = " clave=;";
+      document.cookie = " username=;";
+      // $mdToast.show($mdToast.simple()
+      //   .content("Inicia sesión para poder acceder")
+      //   .position('bottom right')
+      //   .hideDelay(3000));
+      $scope.error = "Inicie sesión para acceder";
+    }
     $scope.username = getCookie('username');
     $scope.$apply();
   });
@@ -35,6 +45,7 @@ app.controller('mainController', function ($scope, $rootScope, $mdDialog, $mdMed
             document.cookie = "clave=" + clave + ";";
             document.cookie = "username=" + credentials.username + ";";
             $scope.username = credentials.username;
+            $scope.error = "";
 
           });
           return showToast("Bienvenido " + credentials.username + ".");

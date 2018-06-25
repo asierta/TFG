@@ -7,10 +7,11 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   $scope.formatos = "";
   firebase.auth().onAuthStateChanged(function (user) {
     if (!user) {
-      $mdToast.show($mdToast.simple()
-        .content("Inicia sesión para poder acceder")
-        .position('bottom right')
-        .hideDelay(3000));
+      // $mdToast.show($mdToast.simple()
+      //   .content("Inicia sesión para poder acceder")
+      //   .position('bottom right')
+      //   .hideDelay(3000));
+      // $scope.error = "Inicia sesión para poder acceder";
       $location.path("/");
     } else {
       $scope.user = true;
@@ -80,7 +81,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
     let grabacionesMostrar = {};
     let grabaciones = [];
     let database = firebase.database();
-    let grabacionesRef = database.ref('grabaciones').child(getCookie('grupo'));
+    let grabacionesRef = database.ref('grabaciones/' + getCookie('grupo'));
     let error = false;
 
     $scope.promise = grabacionesRef.once('value', function (grabacion) {
@@ -189,7 +190,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   $scope.mostrarConfirmarBorrado = function (ev) {
     // Appending dialog to document.body to cover sidenav in docs app
     var confirm = $mdDialog.confirm()
-      .title('Desea eliminar ' + ($scope.selected.length > 1 ? 'las grabaciones seleccionadas?' : 'la grabación seleccionada?'))
+      .title('¿Desea eliminar ' + ($scope.selected.length > 1 ? 'las grabaciones seleccionadas?' : 'la grabación seleccionada?'))
       .textContent('Esta acción no se podrá deshacer.')
       .targetEvent(ev)
       .ok('Continuar')
@@ -1086,7 +1087,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       parent: angular.element(document.body),
       clickOutsideToClose: true,
       template:
-      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; max-width: 93%; min-width: 50%; min-height: 50%;">' +
+      '<md-dialog aria-label="VerGrabacion" style="max-height: 90%; max-width: 93%; min-width: 50%; min-height: 50%;" id="Visualizacion">' +
       ' <md-toolbar>' +
       '          <div class="md-toolbar-tools">' +
       '            <h2>Visualizar esqueleto</h2>' +
@@ -1129,7 +1130,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       '<div layout="row" layout-align="center center" style="margin-bottom: 10px;">' +
       '<div class="preview-controls" id="controls">' +
       <!-- Seek Video Time Control  -->
-      '<div class="time-bar">' +
+      '<div class="time-bar" style="margin-right: 10px;">' +
       '<input id="time-seek" class="time-meter" type="range" min="0" max="100" value="0">' +
       '</div> ' +
       '<div class="control-bar">  ' +
@@ -1192,6 +1193,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
       let notaEnPantalla = [];
       let tiemposEsqueleto = [0];
       let reinicioReproduccion = false;
+      var videoTerminado = false;
 
       if ($scope.hayVideo) {
         $timeout(function () {
@@ -1217,12 +1219,15 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           //play-pause
           function playPause() {
             if (reinicioReproduccion === true) {
+              videoTerminado = false;
               reinicioReproduccion = false;
               myTimer = setInterval(pintarEsqueleto, 35);
               video.play();
+              pausa = false;
               oeplayPauseBtn.innerHTML = '<i class="material-icons vid-icon">pause</i>';
             } else if (video.paused === true) {
-              if (video.currentTime < video.duration) {
+              if (!videoTerminado) {
+                pausa = false;
                 video.play();
                 oeplayPauseBtn.innerHTML = '<i class="material-icons vid-icon">pause</i>';
               } else if (pausa === false) {//Si el video es mas corto que el esqueleto y el video ya ha terminado
@@ -1232,8 +1237,8 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                 pausa = false;
                 oeplayPauseBtn.innerHTML = '<i class="material-icons vid-icon">pause</i>';
               }
-
             } else {
+              pausa = true;
               video.pause();
               oeplayPauseBtn.innerHTML = '<i class="material-icons vid-icon">play_circle_outline</i>';
             }
@@ -1262,9 +1267,10 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
           // update current time if seek bar for time changes
           oeseekBar.addEventListener('change', function () {
             var seekTo = $scope.duracion * (oeseekBar.value / 100);
-
             if (seekTo > video.duration) {
-              video.currentTime = seekTo;
+              video.pause();
+              // video.currentTime = video.duration;
+              videoTerminado = true;
               let oldJ = j;
               j = closest(seekTo * 1000, tiemposEsqueleto);
               if ((j > (oldJ + 35)) || (j < (oldJ - 35))) {
@@ -1286,17 +1292,18 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
             oeplayPauseBtn.innerHTML = '<i class="material-icons vid-icon">pause</i>';
           }, false);
 
-          video.onpause = function () {
-            pausa = true;
-          };
-
-          video.onplay = function () {
-            pausa = false;
-          };
+          // video.onpause = function () {
+          //   pausa = true;
+          // };
+          //
+          // video.onplay = function () {
+          //   pausa = false;
+          // };
 
           video.onended = function () {
             if ($scope.duracion > video.duration) {
               pausa = false;
+              videoTerminado = true;
             } else {
               j = 0;
               video.currentTime = 0;
@@ -1364,7 +1371,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
 
               let oldJ = j;
               j = closest(video.currentTime * 1000, tiemposEsqueleto);
-              if ((j > (oldJ + 35)) || (j < (oldJ - 35))) {
+              // if ((j > (oldJ + 35)) || (j < (oldJ - 35))) {
                 notaEnPantalla = [];
                 for (let obj in grabacion.notasVideo) {
                   let t = closest(horasAMilisegundos(grabacion.notasVideo[obj].segundo), tiemposEsqueleto);
@@ -1374,9 +1381,10 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                     notaEnPantalla.push(nota);
                   }
                 }
-              }
+              // }
             } else {
               video.currentTime = video.duration;
+              videoTerminado= true;
             }
           };
 
@@ -1514,7 +1522,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
             if (!pausa) {
               j++;
               let x, y, z;
-              if (video.duration < $scope.duracion && (video.currentTime === video.duration)) {
+              if (video.duration < $scope.duracion && videoTerminado) {
                 oeseekBar.value = (tiemposEsqueleto[j] / 1000) * (100 / $scope.duracion);
                 let curMins = Math.floor((tiemposEsqueleto[j] / 1000) / 60);
                 let curSecs = Math.floor((tiemposEsqueleto[j] / 1000) - curMins * 60);
@@ -1572,7 +1580,8 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   video.play();
                 }
 
-                for (i = 1; i < (101); i = i + 4) {//Para cada uno de los joints
+                for (i = 2; i < (101); i = i + 4) {//Para cada uno de los joints
+                  // console.log(i);
                   if (linea[i + 1] === "-" || linea[i + 1] === "-") {//Si no hay informacion sobre la posición
                     x = 0;
                     y = 0;
@@ -1581,12 +1590,13 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                     x = parseFloat(linea[i + 1].replace(",", ".")) * 300;
                     y = parseFloat(linea[i + 2].replace(",", ".")) * 300;
                     z = parseFloat(linea[i + 3].replace(",", ".")) * 300;
-                    let joint = (i - 1) / 4;
+                    let joint = ((i + 2) / 4) - 1;
+                    // console.log(joint);
                     for (let k = 0; k < hierarchy[joint].length; k++) {//Para cada una de las articulaciones hija
                       let jointHijo = hierarchy[joint][k];
-                      let xHijo = parseFloat(linea[4 * jointHijo + 2].replace(",", ".")) * 300;
-                      let yHijo = parseFloat(linea[4 * jointHijo + 3].replace(",", ".")) * 300;
-                      let zHijo = parseFloat(linea[4 * jointHijo + 4].replace(",", ".")) * 300;
+                      let xHijo = parseFloat(linea[4 * jointHijo + 3].replace(",", ".")) * 300;
+                      let yHijo = parseFloat(linea[4 * jointHijo + 4].replace(",", ".")) * 300;
+                      let zHijo = parseFloat(linea[4 * jointHijo + 5].replace(",", ".")) * 300;
                       ctx.moveTo((canvas.width / 2) - x, (canvas.height / 2) - y);
                       ctx.lineTo((canvas.width / 2) - xHijo, (canvas.height / 2) - yHijo);//Pintar lineas
                       ctx.stroke();
@@ -1613,7 +1623,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
                   ctxLateral.stroke();
                   ctxLateral.fill();
                 }
-              } else if (video.currentTime === video.duration) {
+              } else if (videoTerminado) {
                 j = 0;
                 video.currentTime = 0;
                 video.pause();
@@ -1841,6 +1851,7 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
               if (j < (data.data.length - 2)) {//Para cada fila con datos
                 let linea = data.data[j];
                 tiempoActual = linea[0];
+                linea.shift();
                 for (let obj in grabacion.notasVideo) {
                   let nota = grabacion.notasVideo[obj];
                   if ((nota.segundo === tiempoActual) && !notaEnPantalla.includes(nota)) {
@@ -2067,7 +2078,6 @@ app.controller('GrabacionController', ['$mdEditDialog', '$q', '$scope', '$timeou
   $scope.loadStuff = function () {
     $scope.promise = $timeout(function () {
       $scope.grabaciones = cargarGrabaciones();
-      $scope.$apply;
     }, 1000);
   };
 

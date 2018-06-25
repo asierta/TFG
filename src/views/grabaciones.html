@@ -3,11 +3,13 @@
     <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px;">
       <legend class="demo-legend" style="color: #3F51B5;"><b>Configuración</b></legend>
       <div layout="row" layout-wrap="" flex="" layout-align="center">
-        <md-checkbox aria-label="Select All" ng-checked="isChecked()" md-indeterminate="isIndeterminate()" ng-click="toggleAll()">
+        <md-checkbox aria-label="Select All" ng-checked="isChecked()" md-indeterminate="isIndeterminate()"
+                     ng-click="toggleAll()">
           <b><span ng-if="isChecked()">De-</span>Seleccionar todas</b>
         </md-checkbox>
 
-        <md-checkbox ng-checked="exists(columna, seleccionado)" ng-click="toggle(columna, seleccionado)" ng-repeat="columna in tabla">
+        <md-checkbox ng-checked="exists(columna, seleccionado)" ng-click="toggle(columna, seleccionado)"
+                     ng-repeat="columna in tabla">
           {{ columna }}
         </md-checkbox>
       </div>
@@ -69,24 +71,36 @@
         <thead md-head md-order="query.order" md-on-reorder="cargarGrabaciones">
         <tr md-row>
           <th md-column md-order-by="id"><span class="cabecera">Id</span></th>
-          <th md-column md-date md-order-by="fechaGrabacion.ts" ng-show="exists('Fecha grabación', seleccionado)"><span class="cabecera">Fecha Grabación</span></th>
-          <th md-column md-order-by="lugar" ng-show="exists('Lugar', seleccionado)"><span class="cabecera">Lugar</span></th>
-          <th md-column md-text md-order-by="paciente" ng-show="exists('Paciente', seleccionado)"><span class="cabecera">Paciente</span></th>
-          <th md-column md-numeric md-order-by="edadPaciente" ng-show="exists('Edad', seleccionado)"><span class="cabecera">Edad</span></th>
-          <th md-column md-numeric md-order-by="edadGrabacion" ng-show="exists('Edad grabación', seleccionado)"><span class="cabecera">Edad grabación</span></th>
+          <th md-column md-date md-order-by="fechaGrabacion.ts" ng-show="exists('Fecha grabación', seleccionado)"><span
+            class="cabecera">Fecha Grabación</span></th>
+          <th md-column md-order-by="lugar" ng-show="exists('Lugar', seleccionado)"><span class="cabecera">Lugar</span>
+          </th>
+          <th md-column md-text md-order-by="paciente" ng-show="exists('Paciente', seleccionado)"><span
+            class="cabecera">Paciente</span></th>
+          <th md-column md-numeric md-order-by="edadPaciente" ng-show="exists('Edad', seleccionado)"><span
+            class="cabecera">Edad</span></th>
+          <th md-column md-numeric md-order-by="edadGrabacion" ng-show="exists('Edad grabación', seleccionado)"><span
+            class="cabecera">Edad grabación</span></th>
           <th md-column ng-show="exists('Grabación', seleccionado)"><span class="cabecera">Grabación</span></th>
-          <th md-column md-text md-order-by="grabacion" ng-show="exists('CSV', seleccionado)"><span class="cabecera">CSV</span></th>
-          <th md-column md-text md-order-by="video" ng-show="exists('Video', seleccionado)"><span class="cabecera">Video</span></th>
-          <th md-column ng-show="exists('Atributos extra', seleccionado)"><span class="cabecera">Atributos extra</span></th>
+          <th md-column md-text md-order-by="grabacion" ng-show="exists('CSV', seleccionado)"><span
+            class="cabecera">CSV</span></th>
+          <th md-column md-text md-order-by="video" ng-show="exists('Video', seleccionado)"><span
+            class="cabecera">Video</span></th>
+          <th md-column ng-show="exists('Atributos extra', seleccionado)"><span class="cabecera">Atributos extra</span>
+          </th>
           <th md-column ng-show="exists('Notas', seleccionado)"><span class="cabecera">Notas</span></th>
         </tr>
         </thead>
         <tbody md-body>
         <tr md-row md-select="grabacion" md-on-select="logItem" md-auto-select="options.autoSelect"
             ng-repeat="grabacion in grabaciones.data | filter: filter.search | orderBy: query.order | limitTo: query.limit : (query.page -1) * query.limit">
-          <td md-cell ng-click="editarCampo($event, grabacion, 'identificador')" ng-class="{'md-placeholder': !grabacion.id}"><span class="dato">{{grabacion.id}}</span></td>
-          <td md-cell ng-click="editarFecha($event, grabacion)" ng-class="{'md-placeholder': !grabacion.fechaGrabacion}" ng-show="exists('Fecha grabación', seleccionado)"><span class="dato">{{grabacion.fechaGrabacion.value || "Añadir fecha grabación"}}</span></td>
-          <td md-cell ng-click="editarCampo($event, grabacion, 'lugar')" ng-class="{'md-placeholder': !grabacion.lugar}" ng-show="exists('Lugar', seleccionado)"><span class="dato">{{grabacion.lugar}}</span></td>
+          <td md-cell ng-click="editarCampo($event, grabacion, 'identificador')"
+              ng-class="{'md-placeholder': !grabacion.id}"><span class="dato">{{grabacion.id}}</span></td>
+          <td md-cell ng-click="editarFecha($event, grabacion)" ng-class="{'md-placeholder': !grabacion.fechaGrabacion}"
+              ng-show="exists('Fecha grabación', seleccionado)"><span class="dato">{{grabacion.fechaGrabacion.value || "Añadir fecha grabación"}}</span>
+          </td>
+          <td md-cell ng-click="editarCampo($event, grabacion, 'lugar')" ng-class="{'md-placeholder': !grabacion.lugar}"
+              ng-show="exists('Lugar', seleccionado)"><span class="dato">{{grabacion.lugar}}</span></td>
           <td md-cell ng-show="exists('Paciente', seleccionado)">
             <md-select ng-model="paciente" ng-change="actualizarPaciente(paciente, grabacion)"
                        placeholder="Buscar un paciente" class="dato">
@@ -122,13 +136,17 @@
               <md-tooltip>Descargar grabación</md-tooltip>
               <md-icon>cloud_download</md-icon>
             </md-button>
-            <md-button id="container" class="md-icon-button" ng-click="exportarJSON(grabacion.grabacion, grabacion.notasVideo)" ng-show="grabacion.grabacion">
+            <md-button id="container" class="md-icon-button"
+                       ng-click="exportarJSON(grabacion.grabacion, grabacion.notasVideo)" ng-show="grabacion.grabacion">
               <md-tooltip>Descargar JSON</md-tooltip>
               <md-icon>cloud_download</md-icon>
             </md-button>
           </td>
-          <td md-cell ng-click="editarCSV($event, grabacion)" ng-class="{'md-placeholder': !grabacion.grabacion}" ng-show="exists('CSV', seleccionado)"><span class="dato">{{grabacion.grabacionMostrar}}</span></td>
-          <td md-cell ng-click="editarVideo($event, grabacion)" ng-class="{'md-placeholder': !grabacion.video}" ng-show="exists('Video', seleccionado)"><span class="dato">{{grabacion.videoMostrar || 'Añadir video'}}</span></td>
+          <td md-cell ng-click="editarCSV($event, grabacion)" ng-class="{'md-placeholder': !grabacion.grabacion}"
+              ng-show="exists('CSV', seleccionado)"><span class="dato">{{grabacion.grabacionMostrar}}</span></td>
+          <td md-cell ng-click="editarVideo($event, grabacion)" ng-class="{'md-placeholder': !grabacion.video}"
+              ng-show="exists('Video', seleccionado)"><span
+            class="dato">{{grabacion.videoMostrar || 'Añadir video'}}</span></td>
 
           <td md-cell ng-show="exists('Atributos extra', seleccionado)">
             <md-button ng-click="verAtributosExtra($event,grabacion)" ng-show="grabacion.extra"
@@ -153,7 +171,8 @@
         </tbody>
       </table>
     </md-table-container>
-    <md-table-pagination class="pieTabla " md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="query.limit"
+    <md-table-pagination class="pieTabla " md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}"
+                         md-limit="query.limit"
                          md-limit-options="limitOptions" md-page="query.page" md-total="{{grabaciones.count}}"
                          md-page-select="options.pageSelect" md-boundary-links="options.boundaryLinks"
                          md-on-paginate="cargarGrabaciones"></md-table-pagination>
@@ -176,17 +195,6 @@
 
         <md-dialog-content style="max-width:800px;max-height:810px; width: auto; height: auto;">
           <div class="md-dialog-content">
-            <div layout="row">
-              <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()"
-                         title="Añadir campo extra">
-                <md-icon md-svg-src="img/icons/add.svg"></md-icon>
-              </md-button>
-              <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 0"
-                         ng-click="quitarCampo()" title="Eliminar último campo extra creado">
-                <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
-              </md-button>
-            </div>
-
             <div layout="row">
               <md-input-container flex="50">
                 <label>Identificador</label>
@@ -233,27 +241,59 @@
             <div layout="row" flex="100">
               <aps-upload-file></aps-upload-file>
             </div>
-            <div ng-repeat="atributo in numeroAtributos" style="max-height: 95px;" layout="row" flex="100" layout-align="center center">
-              <md-input-container flex="50">
-                <md-autocomplete required="required" md-no-cache="noCache" md-input-name="atributoExtraNombre{{atributo}}" md-input-id="searchinputMdAutocomplete" md-selected-item="selectedItem[$index]" md-search-text-change="searchTextChange(searchText[$index])" md-search-text="searchText[$index]" md-selected-item-change="selectedItemChange(item)" md-items="item in querySearch(searchText[$index])" md-item-text="item.display" md-min-length="0" md-floating-label="Atributo extra {{$index + 1 }}">
-                  <md-item-template>
-                    <span md-highlight-text="searchText[$index]" md-highlight-flags="^i">{{item.display}}</span>
-                  </md-item-template>
-                  <md-not-found ng-hide="extraCreado">
-                    <md-button ng-hide="extraCreado" ng-click="crearCampoExtra(atributo)" style="width: 100%; text-align: center;">Crear!</md-button></md-not-found>
-                  <div ng-messages="formPaciente['atributoExtraNombre' +atributo].$error" ng-if="formPaciente['atributoExtraNombre' +atributo].$touched">
+
+            <fieldset class="demo-fieldset" style="  border-style: solid; border-width: 1px;">
+              <legend class="demo-legend" style="color: #3F51B5;">
+                <div layout="row">
+                  <h4>
+                    Información extra
+                  </h4>
+                  <md-button class="md-fab md-mini" aria-label="Añadir campo" ng-click="crearCampo()">
+                    <md-tooltip>Añadir campo extra</md-tooltip>
+                    <md-icon md-svg-src="img/icons/add.svg"></md-icon>
+                  </md-button>
+                  <md-button class="md-fab md-mini" aria-label="Quitar campo" ng-show="nCampoExtra > 0"
+                             ng-click="quitarCampo()">
+                    <md-tooltip>Eliminar último campo extra creado</md-tooltip>
+                    <md-icon md-svg-src="img/icons/remove.svg"></md-icon>
+                  </md-button>
+                </div>
+              </legend>
+              <div ng-repeat="atributo in numeroAtributos" style="max-height: 95px;" layout="row" flex="100"
+                   layout-align="center center">
+                <md-input-container flex="50">
+                  <md-autocomplete required="required" md-no-cache="noCache"
+                                   md-input-name="atributoExtraNombre{{atributo}}"
+                                   md-input-id="searchinputMdAutocomplete" md-selected-item="selectedItem[$index]"
+                                   md-search-text-change="searchTextChange(searchText[$index])"
+                                   md-search-text="searchText[$index]"
+                                   md-selected-item-change="selectedItemChange(item)"
+                                   md-items="item in querySearch(searchText[$index])" md-item-text="item.display"
+                                   md-min-length="0" md-floating-label="Atributo extra {{$index + 1 }}">
+                    <md-item-template>
+                      <span md-highlight-text="searchText[$index]" md-highlight-flags="^i">{{item.display}}</span>
+                    </md-item-template>
+                    <md-not-found ng-hide="extraCreado">
+                      <md-button ng-hide="extraCreado" ng-click="crearCampoExtra(atributo)"
+                                 style="width: 100%; text-align: center;">Crear!
+                      </md-button>
+                    </md-not-found>
+                    <div ng-messages="formPaciente['atributoExtraNombre' +atributo].$error"
+                         ng-if="formPaciente['atributoExtraNombre' +atributo].$touched">
+                      <div ng-message="required">Campo requerido</div>
+                    </div>
+                  </md-autocomplete>
+                </md-input-container>
+                <md-input-container flex="50">
+                  <label>Valor atributo extra {{$index + 1}}</label>
+                  <input name="atributosExtraValor{{$index}}" ng-model="atributosExtraValor[$index]" required>
+                  <div ng-messages="formPaciente['atributosExtraValor'+$index].$error"
+                       ng-show="formPaciente['atributosExtraValor'+$index].$touched">
                     <div ng-message="required">Campo requerido</div>
                   </div>
-                </md-autocomplete>
-              </md-input-container>
-              <md-input-container flex="50">
-                <label>Valor atributo extra {{$index + 1}}</label>
-                <input name="atributosExtraValor{{$index}}" ng-model="atributosExtraValor[$index]" required>
-                <div ng-messages="formPaciente['atributosExtraValor'+$index].$error" ng-show="formPaciente['atributosExtraValor'+$index].$touched">
-                  <div ng-message="required">Campo requerido</div>
-                </div>
-              </md-input-container>
-            </div>
+                </md-input-container>
+              </div>
+            </fieldset>
             <input type="hidden" ng-model="abc"/>
             <div style="text-align: center;">
               <md-button type="submit" class="md-raised md-primary" ng-disabled="formGrabacion.$invalid">Crear

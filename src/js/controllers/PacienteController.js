@@ -6,10 +6,10 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
   $scope.configuracion = true;
   firebase.auth().onAuthStateChanged(function (user) {
     if (!user) {
-      $mdToast.show($mdToast.simple()
-        .content("Inicia sesión para poder acceder")
-        .position('bottom right')
-        .hideDelay(3000));
+      // $mdToast.show($mdToast.simple()
+      //   .content("Inicia sesión para poder acceder")
+      //   .position('bottom right')
+      //   .hideDelay(3000));
       $location.path("/");
     } else {
       $scope.user = true;
@@ -349,7 +349,7 @@ app.controller('PacienteController', ['$mdEditDialog', '$q', '$scope', '$timeout
   $scope.mostrarConfirmarBorrado = function (ev) {
     // Appending dialog to document.body to cover sidenav in docs app
     let confirm = $mdDialog.confirm()
-      .title('Desea eliminar ' + ($scope.selected.length > 1 ? 'los pacientes seleccionados?' : 'el paciente seleccionado?'))
+      .title('¿Desea eliminar ' + ($scope.selected.length > 1 ? 'los pacientes seleccionados?' : 'el paciente seleccionado?'))
       .textContent('Esta acción no se podrá deshacer.')
       .ariaLabel('Lucky day')
       .targetEvent(ev)
